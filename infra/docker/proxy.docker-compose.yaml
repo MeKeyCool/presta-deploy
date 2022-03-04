@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+
+  proxy.nginx:
+    image: jwilder/nginx-proxy:0.8.0
+    container_name: proxy.nginx
+    volumes:
+      - proxy_html:/usr/share/nginx/html
+      - proxy_dhparam:/etc/nginx/dhparam
+      - proxy_vhost:/etc/nginx/vhost.d
+      - proxy_certs:/etc/nginx/certs
+      - /run/docker.sock:/tmp/docker.sock:ro
+    environment:
+      - HTTPS_METHOD=${PROXY_HTTPS_METHOD}
+    restart: always
+    networks:
+      - endpoints
+    ports:
+      - 80:80
+      - 443:443
+
+  proxy.letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion:2.0
+    container_name: proxy.letsencrypt
+    volumes:
+      - proxy_html:/usr/share/nginx/html
+      - proxy_dhparam:/etc/nginx/dhparam
+      - proxy_vhost:/etc/nginx/vhost.d
+      - proxy_certs:/etc/nginx/certs
+      - /run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - NGINX_PROXY_CONTAINER=proxy.nginx
+      - DEFAULT_EMAIL=${PROXY_DEFAULT_EMAIL}
+    restart: always
+    depends_on:
+      - proxy.nginx
+    networks:
+      - endpoints
+
+
+volumes:
+  proxy_certs:
+    driver: local
+  proxy_html:
+    driver: local
+  proxy_vhost:
+    driver: local
+  proxy_dhparam:
+    driver: local
+

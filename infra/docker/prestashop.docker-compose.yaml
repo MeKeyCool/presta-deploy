@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+
+# TODO : review with install
+  psh.db:
+    image: mysql:5.7-debian
+    container_name: psh.db
+    hostname: psh.db
+    restart: always
+    volumes:
+      - psh_db_data:/var/lib/mysql
+    ports:
+      - "3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: prestashop
+      MYSQL_USER: prestashop_admin
+      MYSQL_PASSWORD: prestashop_admin
+    healthcheck:
+      test: "/etc/init.d/mysql status"
+      interval: 1s
+      timeout: 5s
+      retries: 5
+#     networks:
+#       - psh_backend
+
+  psh.cli.npm:
+    # image: node:17.6-bullseye
+    image: node:14.19-buster
+    container_name: psh.cli.npm
+    hostname: psh.cli.npm
+    user: ${CURRENT_UID}
+    working_dir: /home/node/prestashop
+    volumes:
+      - ${INFRA_SRC_PSH}:/home/node/prestashop:rw
+      - ${INFRA_DOCKER_PATH}/prestashop/cache/npm:/.npm:rw
+
+  psh.cli.php:
+    image: ${DOCKER_PSH_IMG}
+    container_name: psh.cli.php
+    hostname: psh.cli.php
+    user: ${CURRENT_UID}
+    command: service apache2 stop # stop useless apache while images not dissociated
+    volumes:
+      - ${INFRA_SRC_PSH}:/var/www/html:rw
+      - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
+      # - $COMPOSER_HOME:???:rw
+      # - $COMPOSER_CACHE_DIR:???:rw
+    # environment:
+      # - COMPOSER_HOME=${INFRA_COMPOSER_HOME:-$HOME/.config/composer}
+      # - COMPOSER_CACHE_DIR=${INFRA_COMPOSER_CACHE_DIR:-$HOME/.cache/composer}
+    depends_on:
+      psh.db:
+        condition: service_healthy
+
+  psh.app:
+    image: ${DOCKER_PSH_IMG}
+    container_name: psh.app
+    hostname: psh.app
+    restart: always
+    user: www-data:www-data
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ${INFRA_SRC_PSH}:/var/www/html:delegated
+      - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
+    depends_on:
+      psh.db:
+        condition: service_healthy
+    # networks:
+    #   - psh_backend
+    #   - endpoints
+
+volumes:
+  psh_db_data:
+    driver: local
+    
+# networks:
+#   psh_backend:
+#     name: ${DOCKER_NETWORK}/psh.backend
+#     driver: bridge

@@ -1,0 +1,8 @@
+version: '3.8'
+
+networks:
+  endpoints:
+    name: ${DOCKER_NETWORK}/endpoints
+    driver: bridge
+#  default:
+#    name: ${DOCKER_NETWORK}/default
