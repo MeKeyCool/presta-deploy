@@ -60,6 +60,9 @@ guard-%:
 ## Infra
 #########
 
+infra-init: infra-run services-init-all
+	# make services-reload-all
+
 infra-run: guard-DOCKER_COMPOSE
 	${DOCKER_COMPOSE} up -d --remove-orphans
 
@@ -74,10 +77,8 @@ infra-stop: guard-DOCKER_COMPOSE
 # First local install (WARNING : needs pre-configuration, cf. Readme)
 env-init: 
 	git submodule update --init
-	make docker-build-dev 
-	make infra-run
-	make services-init-all
-	# make services-reload-all
+	make docker-build-dev
+	make infra-init
 
 # Usefull for prestashop-deploy dev purpose : reset environment to fresh configured project 
 env-reset: clean-all env-docker-clean config-restore
@@ -243,7 +244,10 @@ docker-build-dev: guard-DOCKER_PSH_IMG guard-INFRA_DOCKER_PATH
 	- docker image rm ${DOCKER_PSH_IMG}
 	docker build \
 		--build-arg working_dir=/var/www/html \
-		-t ${DOCKER_PSH_IMG} -f ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.dev ${INFRA_DOCKER_PATH}/build
+		-t ${DOCKER_PSH_IMG} -f ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.7.4.dev ${INFRA_DOCKER_PATH}/build
+	# docker build \
+	# 	--build-arg working_dir=/var/www/html \
+	# 	-t ${DOCKER_PSH_IMG} -f ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.7.2.dev ${INFRA_DOCKER_PATH}/build
 
 # docker-login-dev: guard-DOCKER_REGISTRY_TOKEN guard-DOCKER_REGISTRY_USER guard-DOCKER_REGISTRY_BASE_PATH
 # 	@echo "Docker login (command not logged for security purpose)"
@@ -279,15 +283,42 @@ services-init-all: psh-init
 
 # TODO : deep clean of directory structure (cache and logs)
 psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
-	${EXEC_PSH_CLI_PHP} 'composer install'
-	${EXEC_PSH_CLI_NPM} 'make assets'
-	# ./tools/assets/build.sh
 	${EXEC_PSH_CLI_PHP} 'mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
+	${EXEC_PSH_CLI_PHP} 'composer install'
+	${EXEC_PSH_CLI_NPM} 'make assets'
+	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
+	# ./tools/assets/build.sh
 	# ${EXEC_PSH_CLI_PHP} 'php bin/console ...'
 
+# TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
+# TODO : find a way to remove sudos
+# TODO : problem to fix with img
 psh-clean: guard-INFRA_SRC_PSH guard-INFRA_DOCKER_PATH
-	- cd ${INFRA_SRC_PSH}; sudo rm -rf admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var
-	- cd ${INFRA_SRC_PSH}; mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var
-	find ${INFRA_DOCKER_PATH}/prestashop/cache/npm/* ! -name '.gitignore' -type f -or -type d | xargs -I {} sh -c "rm -rf {}"
-	find ${INFRA_DOCKER_PATH}/prestashop/cache/composer/* ! -name '.gitignore' -type f -or -type d | xargs -I {} sh -c "rm -rf {}"
+	@echo "=== Remove install/dev artefacts"
+	rm -rf ${INFRA_SRC_PSH}/themes/node_modules ${INFRA_SRC_PSH}/themes/core.js ${INFRA_SRC_PSH}/themes/core.js.map ${INFRA_SRC_PSH}/themes/core.js.LICENSE.txt
+	rm -rf ${INFRA_SRC_PSH}/translations/fr-FR ${INFRA_SRC_PSH}/translations/sf-fr-FR.zip
+	cd ${INFRA_SRC_PSH}; \
+		sudo rm -rf app/logs log; mkdir -p app/logs log; \
+		rm var/bootstrap.php.cache; \
+		sudo rm app/config/parameters.php app/config/parameters.yml; \
+		sudo rm -rf config/settings.inc.php config/themes/classic; \
+		find app/Resources/translations -maxdepth 1 -mindepth 1 -type d ! -name 'default' -or -type f ! -name '.gitkeep' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find download 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find mails		   -maxdepth 1 -mindepth 1 -type d ! -name '_partials' ! -name 'themes' -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find modules 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find translations  -maxdepth 1 -mindepth 1 -type d ! -name 'cldr' ! -name 'export' ! -name 'default' -or -type f ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find upload 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find var/cache	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find var/logs 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find var/sessions  -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find vendor 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess'					   | xargs -I {} sh -c "sudo rm -rf {}"
+	@echo "=== Remove npm and composer caches" 
+	find ${INFRA_DOCKER_PATH}/prestashop/cache/npm      -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
+	find ${INFRA_DOCKER_PATH}/prestashop/cache/composer -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
+
+# TODO : test
+psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_CLI_PHP} 'php ./vendor/bin/php-cs-fixer fix'
+	${EXEC_PSH_CLI_NPM} 'npm run scss-lint'
+	${EXEC_PSH_CLI_NPM} 'npm run scss-fix'

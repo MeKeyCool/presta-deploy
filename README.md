@@ -75,21 +75,30 @@ docker builder prune -f
 ### Prestashop specific documentation
 
 * [Contributing](https://github.com/PrestaShop/PrestaShop/blob/develop/CONTRIBUTING.md)
+* [Contribution guidelines](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/)
 * [Coding Standards](https://devdocs.prestashop.com/1.7/development/coding-standards/)
+
 
 ## Todo
 
-* [ ] Enhance TODO list
-* [ ] Find a way to make gitmodule "url" compliant with prestashop contributing (parameterize to remove 'git@github.com:MeKeyCool/PrestaShop.git')
-* [ ] Ensure environment variables are used before *.env files => **TO CHECK**.
-* [ ] Use dedicated "composer" image for composer commands ? 
-* [ ] Solve "assets" subjects
-  * https://devdocs.prestashop.com/8/basics/installation/localhost/#javascript-and-css-dependencies
-  * Should be use a dedicated node docker image to run some commands ?
-* [ ] Enhance install with data (tests / demo / dev / ...)
-  * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
-* [ ] Add composer cache local volume
-* [ ] Remove those directories from root source repository :
-    * admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var
-* [ ] Add tests commands
-* [ ] Add proxy for custom hostname
+* Genericity and automation
+  * [ ] Find a way to make gitmodule "url" compliant with prestashop contributing (parameterize to remove 'git@github.com:MeKeyCool/PrestaShop.git')
+  * [ ] Enhance install with data (tests / demo / dev / ...)
+    * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
+* Optimisation and project architecture
+  * [ ] Use dedicated "composer" image for composer commands ? 
+  * [ ] Add composer cache local volume
+  * [ ] Add tests commands
+  * [ ] Add proxy for custom hostname
+  * [ ] Solve git flow with versionned submodules
+  * [ ] Docker images build / naming depending on php version, OS, etc.
+    * Create a deploy.env variable for php base image tag
+  * [ ] Remove `sudo` usage from Makefile => enhance docker volume usage
+  * [ ] Use a docker registry
+    * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+* Prestashop sources
+  * [ ] Clean Prestashop src to ensure dedicated directories for install
+    * [ ] Remove those directories from root source repository :
+      * admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var
+* Documentation and assets
+  * [ ] Manage licensing
