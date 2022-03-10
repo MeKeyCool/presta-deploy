@@ -1,0 +1,115 @@
+FROM php:7.2-apache-buster
+LABEL maintainer="MeKeyCool <pierre-yves.christmann@prestashop.com>"
+
+# Inspired from https://github.com/PrestaShop/docker/tree/master/base/images/7.2-apache
+
+ARG working_dir
+WORKDIR ${working_dir}
+
+# ENV PS_DOMAIN="<to be defined>" \
+# DB_SERVER="<to be defined>" \
+# DB_PORT=3306 \
+# DB_NAME=prestashop \
+# DB_USER=root \
+# DB_PASSWD=admin \
+# DB_PREFIX=ps_ \
+# ADMIN_MAIL=demo@prestashop.com \
+# ADMIN_PASSWD=prestashop_demo \
+# PS_LANGUAGE=en \
+# PS_COUNTRY=GB \
+# PS_ALL_LANGUAGES=0 \
+# PS_INSTALL_AUTO=0 \
+# PS_ERASE_DB=0 \
+# PS_INSTALL_DB=0 \
+# PS_DEV_MODE=0 \
+# PS_HOST_MODE=0 \
+# PS_DEMO_MODE=0 \
+# PS_ENABLE_SSL=0 \
+# PS_HANDLE_DYNAMIC_DOMAIN=0 \
+# PS_FOLDER_ADMIN=admin \
+# PS_FOLDER_INSTALL=install
+
+RUN a2enmod rewrite
+# RUN set -eux ; \
+RUN \
+    apt-get update && apt-get install -y \
+        libmcrypt-dev \
+		libjpeg62-turbo-dev \
+		libpcre3-dev \
+		libpng-dev \
+        libwebp-dev \
+		libfreetype6-dev \
+		libxml2-dev \
+		libicu-dev \
+		libzip-dev \
+		default-mysql-client \
+		wget \
+        unzip \
+        libonig-dev; \
+    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include; \
+    docker-php-ext-install iconv intl pdo_mysql mbstring soap gd zip; \
+    docker-php-source extract \
+    && if [ -d "/usr/src/php/ext/mysql" ]; then docker-php-ext-install mysql; fi \
+    && if [ -d "/usr/src/php/ext/mcrypt" ]; then docker-php-ext-install mcrypt; fi \
+    && if [ -d "/usr/src/php/ext/opcache" ]; then docker-php-ext-install opcache; fi \
+    && docker-php-source delete
+
+
+# Install composer [TO REMOVE for production image | use dedicated image for dev ?]
+# https://getcomposer.org/doc/faqs/how-to-install-composer-programmatically.md
+# Copy from https://github.com/composer/docker/blob/main/2.2/Dockerfile
+ENV COMPOSER_ALLOW_SUPERUSER 1
+ENV COMPOSER_HOME /tmp
+ENV COMPOSER_VERSION 2.2.3
+
+RUN set -eux ; \
+    apt-get install -y git zip unzip ; \
+    # install public keys for snapshot and tag validation, see https://composer.github.io/pubkeys.html
+    curl \
+        --silent \
+        --fail \
+        --location \
+        --retry 3 \
+        --output /tmp/keys.dev.pub \
+        --url https://raw.githubusercontent.com/composer/composer.github.io/e7f28b7200249f8e5bc912b42837d4598c74153a/snapshots.pub \
+        ; \
+    echo 572b963c4b7512a7de3c71a788772440b1996d918b1d2b5354bf8ba2bb057fadec6f7ac4852f2f8a8c01ab94c18141ce0422aec3619354b057216e0597db5ac2 /tmp/keys.dev.pub | sha512sum --strict --check ; \
+    curl \
+        --silent \
+        --fail \
+        --location \
+        --retry 3 \
+        --output /tmp/keys.tags.pub \
+        --url https://raw.githubusercontent.com/composer/composer.github.io/e7f28b7200249f8e5bc912b42837d4598c74153a/releases.pub \
+        ; \
+    echo 47f374b8840dcb0aa7b2327f13d24ab5f6ae9e58aa630af0d62b3d0ea114f4a315c5d97b21dcad3c7ffe2f0a95db2edec267adaba3f4f5a262abebe39aed3a28 /tmp/keys.tags.pub | sha512sum --strict --check ; \
+    # download installer.php, see https://getcomposer.org/download/
+    curl \
+        --silent \
+        --fail \
+        --location \
+        --retry 3 \
+        --output /tmp/installer.php \
+        --url https://raw.githubusercontent.com/composer/getcomposer.org/f24b8f860b95b52167f91bbd3e3a7bcafe043038/web/installer \
+        ; \
+    echo 3137ad86bd990524ba1dedc2038309dfa6b63790d3ca52c28afea65dcc2eaead16fb33e9a72fd2a7a8240afaf26e065939a2d472f3b0eeaa575d1e8648f9bf19 /tmp/installer.php | sha512sum --strict --check ; \
+    # install composer phar binary
+    php /tmp/installer.php \
+        --no-ansi \
+        --install-dir=/usr/bin \
+        --filename=composer \
+        --version=${COMPOSER_VERSION} \
+        ; \
+    composer --ansi --version --no-interaction ; \
+    composer diagnose ; \
+    rm -fr /tmp/installer.php /tmp/cache ;
+
+
+# Keep this documetation if custom entry-point needed.
+# Usefull documentation : https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#using-entrypoint-for-pre-run-configuration
+# ENTRYPOINT ["/docker-entrypoint.sh", "docker-php-entrypoint"]
+# Please notice that overriding ENTRYPOINT overrides default CMD as well
+# You may need to check original Dockerfile to know what CMD you should use.
+# CMD ["apache2-foreground"]
+
+
