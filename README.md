@@ -31,9 +31,10 @@ In order to use this project properly, you need
 2. Up your environment : ``make env-init``
 
 **UNDER WORK** : add / review / comment install steps
-- Connect to your install : ${PROXY_BASE_HOSTNAME}/install-dev/ | ${PROXY_BASE_HOSTNAME}/install/
-
-
+- Connect to your install : 
+  - [auto-setup](${PROXY_BASE_HOSTNAME}/install-dev/index.php)
+  - [front-office](${PROXY_BASE_HOSTNAME}/index.php)
+  - [back-office](${PROXY_BASE_HOSTNAME}/admin-dev/index.php)
 
 
 > :point_up: Take a look to `Makefile` commands. USefull for prestashop stack deployment.
@@ -77,6 +78,8 @@ docker builder prune -f
 * [Contributing](https://github.com/PrestaShop/PrestaShop/blob/develop/CONTRIBUTING.md)
 * [Contribution guidelines](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/)
 * [Coding Standards](https://devdocs.prestashop.com/1.7/development/coding-standards/)
+* [Submitting code changes](https://devdocs.prestashop.com/8/contribute/contribute-pull-requests/)
+* [Writing a good commit message](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/writing-a-good-commit-message/)
 
 
 ## Todo

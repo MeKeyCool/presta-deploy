@@ -189,7 +189,7 @@ clean-config: config-backup
 # 	cache:warmup
 # 	doctrine:cache:clear-*
 
-clean-all: psh-clean clean-config
+clean-all: psh-clean-all clean-config
 
 
 ## Shell
@@ -278,8 +278,11 @@ services-init-all: psh-init
 # 	echo "todo"
 
 
+
 ## Prestashop service admin
 ############################
+# TODO : underwork, looking for proper generic commands (iterative dev) 
+
 
 # TODO : deep clean of directory structure (cache and logs)
 psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
@@ -291,20 +294,31 @@ psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	# ./tools/assets/build.sh
 	# ${EXEC_PSH_CLI_PHP} 'php bin/console ...'
 
+psh-clean-all: psh-clean-artefacts psh-clean-env
+
 # TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
 # TODO : find a way to remove sudos
 # TODO : problem to fix with img
-psh-clean: guard-INFRA_SRC_PSH guard-INFRA_DOCKER_PATH
+# TO REVIEW : should ${INFRA_DOCKER_PATH}/prestashop/cache/* be considered as service directories ? => clean only with env-* commands ?
+psh-clean-artefacts: guard-INFRA_SRC_PSH
 	@echo "=== Remove install/dev artefacts"
 	rm -rf ${INFRA_SRC_PSH}/themes/node_modules ${INFRA_SRC_PSH}/themes/core.js ${INFRA_SRC_PSH}/themes/core.js.map ${INFRA_SRC_PSH}/themes/core.js.LICENSE.txt
-	rm -rf ${INFRA_SRC_PSH}/translations/fr-FR ${INFRA_SRC_PSH}/translations/sf-fr-FR.zip
 	cd ${INFRA_SRC_PSH}; \
 		sudo rm -rf app/logs log; mkdir -p app/logs log; \
 		rm var/bootstrap.php.cache; \
 		sudo rm app/config/parameters.php app/config/parameters.yml; \
 		sudo rm -rf config/settings.inc.php config/themes/classic; \
+		sudo rm -rf themes/classic/assets/cache; \
 		find app/Resources/translations -maxdepth 1 -mindepth 1 -type d ! -name 'default' -or -type f ! -name '.gitkeep' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find download 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/c 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/genders   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'Unknown.jpg' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/l 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'none.jpg'  | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/m 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/p 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/os 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/st 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/su 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find mails		   -maxdepth 1 -mindepth 1 -type d ! -name '_partials' ! -name 'themes' -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find modules 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find translations  -maxdepth 1 -mindepth 1 -type d ! -name 'cldr' ! -name 'export' ! -name 'default' -or -type f ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
@@ -313,12 +327,36 @@ psh-clean: guard-INFRA_SRC_PSH guard-INFRA_DOCKER_PATH
 		find var/logs 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find var/sessions  -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find vendor 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess'					   | xargs -I {} sh -c "sudo rm -rf {}"
+
+psh-clean-env: guard-INFRA_DOCKER_PATH
 	@echo "=== Remove npm and composer caches" 
 	find ${INFRA_DOCKER_PATH}/prestashop/cache/npm      -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
 	find ${INFRA_DOCKER_PATH}/prestashop/cache/composer -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
 
-# TODO : test
+
+
+# TODO : under tests commands
+##############################
+
+psh-dev-reset: psh-clean-artefacts
+	- docker stop $(shell docker ps -a -q)
+	# - docker rm -v $(shell docker ps -a -q)
+	# - docker volume rm $(shell docker volume ls -qf dangling=true)
+	# - docker network rm $(shell docker network ls -q --filter type=custom)
+	make infra-init
+
 psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_PHP} 'php ./vendor/bin/php-cs-fixer fix'
-	${EXEC_PSH_CLI_NPM} 'npm run scss-lint'
-	${EXEC_PSH_CLI_NPM} 'npm run scss-fix'
+	# ${EXEC_PSH_CLI_NPM} 'npm run scss-lint'
+	# ${EXEC_PSH_CLI_NPM} 'npm run scss-fix'
+
+psh-test: guard-EXEC_PSH_CLI_PHP
+	${EXEC_PSH_CLI_PHP} 'composer test-all'
+
+psh-clean-cache: guard-EXEC_PSH_CLI_PHP
+	${EXEC_PSH_CLI_PHP} 'php bin/console cache:clear'
+
+# TODO : find a generic way to "npm run watch" a theme according dynamic choice. 
+psh-watch: guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
+
