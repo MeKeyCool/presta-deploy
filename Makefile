@@ -351,7 +351,12 @@ psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	# ${EXEC_PSH_CLI_NPM} 'npm run scss-fix'
 
 psh-test: guard-EXEC_PSH_CLI_PHP
-	${EXEC_PSH_CLI_PHP} 'composer test-all'
+	# ${EXEC_PSH_CLI_PHP} 'composer test-all'
+	${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Grid/Definition/Factory/CustomerAddressGridDefinitionFactoryTest.php'
+
+# https://phpstan.org/user-guide/command-line-usage
+psh-test-stan: guard-EXEC_PSH_CLI_PHP
+	${EXEC_PSH_CLI_PHP} 'php vendor/bin/phpstan analyse --memory-limit 1G -v -c phpstan.neon.dist'
 
 psh-clean-cache: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'php bin/console cache:clear'
