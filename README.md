@@ -80,6 +80,13 @@ docker builder prune -f
 * [Coding Standards](https://devdocs.prestashop.com/1.7/development/coding-standards/)
 * [Submitting code changes](https://devdocs.prestashop.com/8/contribute/contribute-pull-requests/)
 * [Writing a good commit message](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/writing-a-good-commit-message/)
+* [Create a pull request](https://devdocs.prestashop.com/1.7/contribute/contribute-pull-requests/create-pull-request/)
+    ```shell
+    git remote add ps https://github.com/PrestaShop/PrestaShop.git
+    git fetch ps
+    git rebase -i ps/develop
+    git push -f origin develop
+    ```
 
 
 ## Todo
