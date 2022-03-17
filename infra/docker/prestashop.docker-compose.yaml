@@ -10,8 +10,6 @@ services:
     restart: always
     volumes:
       - psh_db_data:/var/lib/mysql
-    ports:
-      - "3306"
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: prestashop
@@ -22,8 +20,8 @@ services:
       interval: 1s
       timeout: 5s
       retries: 5
-#     networks:
-#       - psh_backend
+    networks:
+      - psh_backend
 
   psh.cli.npm:
     # image: node:17.6-bullseye
@@ -35,6 +33,8 @@ services:
     volumes:
       - ${INFRA_SRC_PSH}:/home/node/prestashop:rw
       - ${INFRA_DOCKER_PATH}/prestashop/cache/npm:/.npm:rw
+    networks:
+      - psh_backend
 
   psh.cli.php:
     image: ${DOCKER_PSH_IMG}
@@ -45,14 +45,16 @@ services:
     volumes:
       - ${INFRA_SRC_PSH}:/var/www/html:rw
       - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
-      # - $COMPOSER_HOME:???:rw
-      # - $COMPOSER_CACHE_DIR:???:rw
-    # environment:
+      - ${INFRA_DOCKER_PATH}/prestashop/cache/composer:/tmp/composer:rw
+    environment:
+      - COMPOSER_HOME=/tmp/composer
       # - COMPOSER_HOME=${INFRA_COMPOSER_HOME:-$HOME/.config/composer}
       # - COMPOSER_CACHE_DIR=${INFRA_COMPOSER_CACHE_DIR:-$HOME/.cache/composer}
     depends_on:
       psh.db:
         condition: service_healthy
+    networks:
+      - psh_backend
 
   psh.app:
     image: ${DOCKER_PSH_IMG}
@@ -60,24 +62,34 @@ services:
     hostname: psh.app
     restart: always
     user: www-data:www-data
-    ports:
-      - 80:80
-      - 443:443
+    environment:
+      # Proxy integration
+      # VIRTUAL_HOST: ${PROXY_BASE_HOSTNAME}
+      # HTTPS_METHOD: noredirect
+      LETSENCRYPT_HOST: ${PROXY_BASE_HOSTNAME}
+    expose:
+      - 80
+      - 443
     volumes:
       - ${INFRA_SRC_PSH}:/var/www/html:delegated
       - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
+      # TODO : review this volume usage once Prestashop ssl management properly configured.
+      # cf. Dockerfile for consistency.
+      - proxy_certs:/etc/nginx/certs
     depends_on:
       psh.db:
         condition: service_healthy
-    # networks:
-    #   - psh_backend
-    #   - endpoints
+      proxy.letsencrypt:
+        condition: service_started
+    networks:
+      - psh_backend
+      - endpoints
 
 volumes:
   psh_db_data:
     driver: local
     
-# networks:
-#   psh_backend:
-#     name: ${DOCKER_NETWORK}/psh.backend
-#     driver: bridge
+networks:
+  psh_backend:
+    name: ${DOCKER_NETWORK}/psh.backend
+    driver: bridge

@@ -3,16 +3,18 @@ version: '3.8'
 services:
 
   proxy.nginx:
-    image: jwilder/nginx-proxy:0.8.0
+    image: jwilder/nginx-proxy:1.0
     container_name: proxy.nginx
     volumes:
+      - ${INFRA_ENV_PATH}/proxy/etc/nginx/conf.d/prestashop.conf:/etc/nginx/conf.d/prestashop.conf:ro
       - proxy_html:/usr/share/nginx/html
       - proxy_dhparam:/etc/nginx/dhparam
       - proxy_vhost:/etc/nginx/vhost.d
       - proxy_certs:/etc/nginx/certs
       - /run/docker.sock:/tmp/docker.sock:ro
     environment:
-      - HTTPS_METHOD=${PROXY_HTTPS_METHOD}
+      - HTTPS_METHOD=noredirect
+      # - DEBUG=true
     restart: always
     networks:
       - endpoints
@@ -46,6 +48,17 @@ volumes:
     driver: local
   proxy_vhost:
     driver: local
+    # TODO : review this usage for production & letsencrypt usage.
+    driver_opts:
+      o: bind
+      type: none
+      device: ${INFRA_ENV_PATH}/proxy/etc/nginx/vhost.d
   proxy_dhparam:
     driver: local
+  # proxy_tmp:
+  #   driver: local
+  #   driver_opts:
+  #     o: bind
+  #     type: none
+  #     device: ${INFRA_ENV_PATH}/proxy/tmp
 

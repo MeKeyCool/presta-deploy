@@ -21,6 +21,8 @@ In order to use this project properly, you need
 
 ### Local run
 
+> :warning: Current project requires to define `PROXY_BASE_HOSTNAME` has `prestashop.local` and to add it to your `hosts` file.
+
 1. For first install, configure your local environment 
     1. ``cp infra/env/deploy.env.template infra/env/deploy.env``
     2. Edit ``deploy.env`` values.
@@ -58,7 +60,7 @@ You may need to clean all your local Docker environment :
 ```sh
 docker stop $(docker ps -a -q)
 docker rm -v $(docker ps -a -q)
-docker volume rm $(docker volume ls -qf dangling=true)
+docker volume rm $(docker volume ls -q -f dangling=true)
 docker network rm $(docker network ls -q --filter type=custom)
 docker rmi $(docker images -a -q) -f
 docker builder prune -f
@@ -112,3 +114,7 @@ docker builder prune -f
       * admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var
 * Documentation and assets
   * [ ] Manage licensing
+* Proxy
+  * [ ] Find a proper setup to configure `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.local` with ${PROXY_BASE_HOSTNAME} file name under ${INFRA_ENV_PATH}} directory and to replace environment variables.
+  * [ ] Remove hard coded `prestashop.local` in configurations (instead of ${PROXY_BASE_HOSTNAME})
+

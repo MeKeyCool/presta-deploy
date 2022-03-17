@@ -2,7 +2,9 @@ FROM php:7.4-apache-bullseye
 # FROM 8.1-apache-bullseye
 LABEL maintainer="MeKeyCool <pierre-yves.christmann@prestashop.com>"
 
-# Inspired from https://github.com/PrestaShop/docker/tree/master/base/images/7.4-apache
+# Inspired from 
+# - https://github.com/PrestaShop/docker/tree/master/base/images/7.4-apache
+# - https://github.com/SD1982/dockerQA/blob/master/php/dockerfiles/php-7.4.Dockerfile
 
 ARG working_dir
 WORKDIR ${working_dir}
@@ -30,7 +32,21 @@ WORKDIR ${working_dir}
 # PS_FOLDER_ADMIN=admin \
 # PS_FOLDER_INSTALL=install
 
-RUN a2enmod rewrite
+RUN a2enmod rewrite; \
+    a2enmod ssl
+
+# WARN : allowing this "default-ssl" requires a valid '/etc/ssl/certs/ssl-cert-snakeoil.pem' certificats
+#        Without this certificats, the container risks to not work properly (take a look to logs)
+# Workaround to share specific certs files accross proxy / letsencrypt and prestashop image
+RUN set -eux; \
+    sed -i 's+/etc/ssl/certs/ssl-cert-snakeoil.pem+/etc/nginx/certs/default.crt+g' /etc/apache2/sites-available/default-ssl.conf; \
+    sed -i 's+/etc/ssl/private/ssl-cert-snakeoil.key+/etc/nginx/certs/default.key+g' /etc/apache2/sites-available/default-ssl.conf; \
+    a2ensite default-ssl;
+
+# TODO
+# EXPOSE 80
+# EXPOSE 443
+
 RUN set -eux ; \
     apt-get update && apt-get install -y \
         libmcrypt-dev \
