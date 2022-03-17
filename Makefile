@@ -83,17 +83,20 @@ env-init:
 # Usefull for prestashop-deploy dev purpose : reset environment to fresh configured project 
 env-reset: clean-all env-docker-clean config-restore
 	rm -rf ${INFRA_SRC_PSH}
+
+# Usefull for prestashop-deploy dev purpose : rebuild environment to test docker and environment 
+env-rebuild: psh-clean-artefacts env-docker-clean docker-build-dev infra-init
 	
 # Complete docker environment purge
 # WARNING : This command will purge all docker environment (all projects) 
 env-docker-clean:
 	- docker stop $(shell docker ps -a -q)
 	- docker rm -v $(shell docker ps -a -q)
-	- docker volume rm $(shell docker volume ls -qf dangling=true)
+	- docker volume rm $(shell docker volume ls -q -f dangling=true)
 	- docker network rm $(shell docker network ls -q --filter type=custom)
 	- docker rmi $(shell docker images -a -q) -f
-	# - docker builder prune -f
-	# - docker system prune -a -f
+	- docker builder prune -f
+	- docker system prune -a -f
 
 # WARN this command should be used during dev only cause it prints some credentials
 env-log:
@@ -122,7 +125,7 @@ env-log:
 
 logs:
 	$(DOCKER_COMPOSE) ps
-	$(DOCKER_COMPOSE) logs -f
+	$(DOCKER_COMPOSE) logs -f --tail=100
 
 # TODO : review npm log commands
 log-psh.cli:
@@ -138,7 +141,11 @@ log-psh.app:
 
 # TODO : manage all services
 log-psh.app-env:
-	${DOCKER_COMPOSE} exec psh.app printenv
+	${DOCKER_COMPOSE} exec psh.app printenv | sort
+
+log-proxy-env:
+	${DOCKER_COMPOSE} exec proxy.nginx printenv | sort
+	${DOCKER_COMPOSE} exec proxy.letsencrypt printenv | sort
 
 log-system:
 	printenv
@@ -198,9 +205,8 @@ clean-all: psh-clean-all clean-config
 shell-psh.db: guard-EXEC_PSH_DB
 	${EXEC_PSH_DB} '/bin/bash'
 
-# TODO
-# shell-psh.myql: guard-EXEC_PSH_DB
-# 	${EXEC_PSH_DB} '??? -U presta -d presta'
+shell-psh.myql: guard-EXEC_PSH_DB
+	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin'
 
 shell-psh.app: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} '/bin/bash'
@@ -214,6 +220,12 @@ shell-psh.cli.npm: guard-EXEC_PSH_CLI_NPM
 shell-psh.app-sudo: guard-DOCKER_COMPOSE
 	${DOCKER_COMPOSE} exec -u root:root psh.app sh -c '/bin/bash'
 	# ${DOCKER_COMPOSE} exec -u ${CURRENT_UID} psh.app sh -c '/bin/bash'
+
+shell-proxy: guard-DOCKER_COMPOSE
+	${DOCKER_COMPOSE} exec -u root:root proxy.nginx sh -c '/bin/sh'
+
+shell-proxy.letsencrypt: guard-DOCKER_COMPOSE
+	${DOCKER_COMPOSE} exec -u root:root proxy.letsencrypt sh -c '/bin/sh'
 
 
 ## Tests
@@ -319,6 +331,7 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 		find img/os 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/st 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/su 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/tmp 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find mails		   -maxdepth 1 -mindepth 1 -type d ! -name '_partials' ! -name 'themes' -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find modules 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find translations  -maxdepth 1 -mindepth 1 -type d ! -name 'cldr' ! -name 'export' ! -name 'default' -or -type f ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
@@ -328,11 +341,11 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 		find var/sessions  -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find vendor 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess'					   | xargs -I {} sh -c "sudo rm -rf {}"
 
+# TODO : shouldn't we move this cache to env/data ?
 psh-clean-env: guard-INFRA_DOCKER_PATH
 	@echo "=== Remove npm and composer caches" 
 	find ${INFRA_DOCKER_PATH}/prestashop/cache/npm      -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
 	find ${INFRA_DOCKER_PATH}/prestashop/cache/composer -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
-
 
 
 # TODO : under tests commands
@@ -340,9 +353,9 @@ psh-clean-env: guard-INFRA_DOCKER_PATH
 
 psh-dev-reset: psh-clean-artefacts
 	- docker stop $(shell docker ps -a -q)
-	# - docker rm -v $(shell docker ps -a -q)
-	# - docker volume rm $(shell docker volume ls -qf dangling=true)
-	# - docker network rm $(shell docker network ls -q --filter type=custom)
+	- docker rm -v $(shell docker ps -a -q)
+	- docker volume rm $(shell docker volume ls -q -f dangling=true)
+	- docker network rm $(shell docker network ls -q --filter type=custom)
 	make infra-init
 
 psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
@@ -352,6 +365,11 @@ psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 
 psh-test: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'composer test-all'
+	# ${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Grid/Definition/Factory/CustomerAddressGridDefinitionFactoryTest.php'
+
+# https://phpstan.org/user-guide/command-line-usage
+psh-test-stan: guard-EXEC_PSH_CLI_PHP
+	${EXEC_PSH_CLI_PHP} 'php vendor/bin/phpstan analyse --memory-limit 1G -v -c phpstan.neon.dist'
 
 psh-clean-cache: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'php bin/console cache:clear'
