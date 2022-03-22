@@ -301,6 +301,7 @@ psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_PHP} 'mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	${EXEC_PSH_CLI_PHP} 'composer install'
+	${EXEC_PSH_CLI_PHP} 'touch .htaccess'
 	${EXEC_PSH_CLI_NPM} 'make assets'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	# ./tools/assets/build.sh
@@ -317,6 +318,7 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 	rm -rf ${INFRA_SRC_PSH}/themes/node_modules ${INFRA_SRC_PSH}/themes/core.js ${INFRA_SRC_PSH}/themes/core.js.map ${INFRA_SRC_PSH}/themes/core.js.LICENSE.txt
 	cd ${INFRA_SRC_PSH}; \
 		sudo rm -rf app/logs log; mkdir -p app/logs log; \
+		rm .htaccess; \
 		rm var/bootstrap.php.cache; \
 		sudo rm app/config/parameters.php app/config/parameters.yml; \
 		sudo rm -rf config/settings.inc.php config/themes/classic; \
