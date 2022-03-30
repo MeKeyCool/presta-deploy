@@ -307,6 +307,10 @@ psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	# ./tools/assets/build.sh
 	# ${EXEC_PSH_CLI_PHP} 'php bin/console ...'
 
+# TODO : Add some variables to customize and ensure consistency.
+# Rq. according src/prestashop/install-dev/classes/datas.php, name is for shop name.
+# ${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_password=prestashop_admin --db_name=prestashop --db_create=1 --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin
+
 psh-clean-all: psh-clean-artefacts psh-clean-env
 
 # TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
@@ -372,6 +376,9 @@ psh-test: guard-EXEC_PSH_CLI_PHP
 # https://phpstan.org/user-guide/command-line-usage
 psh-test-stan: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'php vendor/bin/phpstan analyse --memory-limit 1G -v -c phpstan.neon.dist'
+
+# TODO add psh-test-sanity
+# HEADLESS=false URL_FO=https://prestashop.php73.local/ DB_NAME=prestashop DB_PASSWD=root npm run sanity-travis
 
 psh-clean-cache: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'php bin/console cache:clear'
