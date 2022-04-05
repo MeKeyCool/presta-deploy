@@ -69,7 +69,7 @@ docker system prune -a -f
 
 If you want to rebase your current branch to Prestashop/develop :
 ```sh
-git remote add ps https://github.com/PrestaShop/PrestaShop.git
+git remote add ps git@github.com:PrestaShop/PrestaShop.git
 git fetch ps
 git rebase -i ps/develop
 git push -f origin develop
@@ -122,6 +122,9 @@ If you want to change an old commit :
 * [Writing a good commit message](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/writing-a-good-commit-message/)
 * [Create a pull request](https://devdocs.prestashop.com/1.7/contribute/contribute-pull-requests/create-pull-request/)
 
+### Dev and stack documentation
+
+* [How To Debug PHP using Xdebug, VS Code and Docker](https://php.tutorials24x7.com/blog/how-to-debug-php-using-xdebug-visual-studio-code-and-docker-on-ubuntu)
 
 ## Todo
 
@@ -129,7 +132,10 @@ If you want to change an old commit :
   * [ ] Find a way to make gitmodule "url" compliant with prestashop contributing (parameterize to remove 'git@github.com:MeKeyCool/PrestaShop.git')
   * [ ] Enhance install with data (tests / demo / dev / ...)
     * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
+  * [ ] Add a complete cli install command
+    * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
 * Optimisation and project architecture
+  * [ ] Add some cache for phpstan and php_cs dev usage (not reset during psh-dev-reset)
   * [ ] Use dedicated "composer" image for composer commands ? 
   * [ ] Add composer cache local volume
   * [ ] Add tests commands

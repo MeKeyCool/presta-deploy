@@ -10,6 +10,7 @@ services:
     restart: always
     volumes:
       - psh_db_data:/var/lib/mysql
+      # - psh_db_init:/docker-entrypoint-initdb.d
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: prestashop
@@ -70,9 +71,13 @@ services:
     expose:
       - 80
       - 443
+    ports:
+      - 9000:9000 # XDebug
     volumes:
       - ${INFRA_SRC_PSH}:/var/www/html:delegated
       - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
+      - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ${INFRA_ENV_PATH}/xdebug:/var/logs/xdebug
       # TODO : review this volume usage once Prestashop ssl management properly configured.
       # cf. Dockerfile for consistency.
       - proxy_certs:/etc/nginx/certs
@@ -88,6 +93,13 @@ services:
 volumes:
   psh_db_data:
     driver: local
+  # psh_db_init:
+  #   driver: local
+  #   driver_opts:
+  #     o: bind
+  #     type: none
+  #     device: ${INFRA_ENV_PATH}/prestashop/docker-entrypoint-initdb.d
+
     
 networks:
   psh_backend:

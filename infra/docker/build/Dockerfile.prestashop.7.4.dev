@@ -117,8 +117,9 @@ RUN set -eux ; \
         ; \
     composer --ansi --version --no-interaction ; \
     composer diagnose ; \
-    rm -fr /tmp/installer.php /tmp/cache ;
-
+    rm -fr /tmp/installer.php /tmp/cache ; \
+    # Xdebug
+    pecl install xdebug-3.1.4 ;
 
 # Keep this documetation if custom entry-point needed.
 # Usefull documentation : https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#using-entrypoint-for-pre-run-configuration

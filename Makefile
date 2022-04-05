@@ -205,7 +205,7 @@ clean-all: psh-clean-all clean-config
 shell-psh.db: guard-EXEC_PSH_DB
 	${EXEC_PSH_DB} '/bin/bash'
 
-shell-psh.myql: guard-EXEC_PSH_DB
+shell-psh.mysql: guard-EXEC_PSH_DB
 	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin'
 
 shell-psh.app: guard-EXEC_PSH_APP
@@ -277,7 +277,7 @@ docker-build-dev: guard-DOCKER_PSH_IMG guard-INFRA_DOCKER_PATH
 
 # TODO separate services
 # services-reload-all: guard-EXEC_PSH_APP
-# 	${EXEC_PSH_APP} 'apachectl graceful'
+# 	${EXEC_PSH_APP} 'nginx -s reload'
 
 services-init-all: psh-init
 
@@ -372,6 +372,15 @@ psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 psh-test: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'composer test-all'
 	# ${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Grid/Definition/Factory/CustomerAddressGridDefinitionFactoryTest.php'
+
+# psh-test-integration: guard-EXEC_PSH_CLI_PHP
+# 	${EXEC_PSH_CLI_PHP} 'composer -vvv integration-tests'
+
+# psh-test-integration-behaviour: guard-EXEC_PSH_CLI_PHP
+# 	# cf. tests/Integration/Behaviour/Features/Scenario/Order/order_from_bo.feature
+# 	${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress --no-snippets --strict --tags order-from-bo'
+# 	# ${EXEC_PSH_CLI_PHP} 'composer run-script integration-behaviour-tests --timeout=0'
+# 	# ${EXEC_PSH_CLI_PHP} 'composer -v integration-behaviour-tests'
 
 # https://phpstan.org/user-guide/command-line-usage
 psh-test-stan: guard-EXEC_PSH_CLI_PHP
