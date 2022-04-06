@@ -146,6 +146,7 @@ If you want to change an old commit :
   * [ ] Remove `sudo` usage from Makefile => enhance docker volume usage
   * [ ] Use a docker registry
     * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+  * [ ] create timeout parameter (proxy, php.ini)
 * Prestashop sources
   * [ ] Clean Prestashop src to ensure dedicated directories for install
     * [ ] Remove those directories from root source repository :
