@@ -154,6 +154,9 @@ log-system:
 	docker system df
 	# docker stats
 
+# TODO : add an history graph view
+# git log --pretty=format:"%h %s" --graph --since=1.weeks
+
 ## Config
 ##########
 
