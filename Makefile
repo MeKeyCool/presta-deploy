@@ -154,6 +154,9 @@ log-system:
 	docker system df
 	# docker stats
 
+# TODO : add an history graph view
+# git log --pretty=format:"%h %s" --graph --since=1.weeks
+
 ## Config
 ##########
 
@@ -205,7 +208,7 @@ clean-all: psh-clean-all clean-config
 shell-psh.db: guard-EXEC_PSH_DB
 	${EXEC_PSH_DB} '/bin/bash'
 
-shell-psh.myql: guard-EXEC_PSH_DB
+shell-psh.mysql: guard-EXEC_PSH_DB
 	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin'
 
 shell-psh.app: guard-EXEC_PSH_APP
@@ -277,7 +280,7 @@ docker-build-dev: guard-DOCKER_PSH_IMG guard-INFRA_DOCKER_PATH
 
 # TODO separate services
 # services-reload-all: guard-EXEC_PSH_APP
-# 	${EXEC_PSH_APP} 'apachectl graceful'
+# 	${EXEC_PSH_APP} 'nginx -s reload'
 
 services-init-all: psh-init
 
@@ -301,10 +304,15 @@ psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_PHP} 'mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	${EXEC_PSH_CLI_PHP} 'composer install'
+	${EXEC_PSH_CLI_PHP} 'touch .htaccess'
 	${EXEC_PSH_CLI_NPM} 'make assets'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	# ./tools/assets/build.sh
 	# ${EXEC_PSH_CLI_PHP} 'php bin/console ...'
+
+# TODO : Add some variables to customize and ensure consistency.
+# Rq. according src/prestashop/install-dev/classes/datas.php, name is for shop name.
+# ${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_password=prestashop_admin --db_name=prestashop --db_create=1 --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin
 
 psh-clean-all: psh-clean-artefacts psh-clean-env
 
@@ -317,6 +325,7 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 	rm -rf ${INFRA_SRC_PSH}/themes/node_modules ${INFRA_SRC_PSH}/themes/core.js ${INFRA_SRC_PSH}/themes/core.js.map ${INFRA_SRC_PSH}/themes/core.js.LICENSE.txt
 	cd ${INFRA_SRC_PSH}; \
 		sudo rm -rf app/logs log; mkdir -p app/logs log; \
+		rm .htaccess; \
 		rm var/bootstrap.php.cache; \
 		sudo rm app/config/parameters.php app/config/parameters.yml; \
 		sudo rm -rf config/settings.inc.php config/themes/classic; \
@@ -367,14 +376,31 @@ psh-test: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'composer test-all'
 	# ${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Grid/Definition/Factory/CustomerAddressGridDefinitionFactoryTest.php'
 
+# psh-test-integration: guard-EXEC_PSH_CLI_PHP
+# 	${EXEC_PSH_CLI_PHP} 'composer -vvv integration-tests'
+
+# psh-test-integration-behaviour: guard-EXEC_PSH_CLI_PHP
+# 	# cf. tests/Integration/Behaviour/Features/Scenario/Order/order_from_bo.feature
+# 	${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress --no-snippets --strict --tags order-from-bo'
+# 	# ${EXEC_PSH_CLI_PHP} 'composer run-script integration-behaviour-tests --timeout=0'
+# 	# ${EXEC_PSH_CLI_PHP} 'composer -v integration-behaviour-tests'
+
 # https://phpstan.org/user-guide/command-line-usage
 psh-test-stan: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'php vendor/bin/phpstan analyse --memory-limit 1G -v -c phpstan.neon.dist'
+
+# TODO add psh-test-sanity
+# HEADLESS=false URL_FO=https://prestashop.php73.local/ DB_NAME=prestashop DB_PASSWD=root npm run sanity-travis
 
 psh-clean-cache: guard-EXEC_PSH_CLI_PHP
 	${EXEC_PSH_CLI_PHP} 'php bin/console cache:clear'
 
 # TODO : find a generic way to "npm run watch" a theme according dynamic choice. 
 psh-watch: guard-EXEC_PSH_CLI_NPM
-	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
+	${EXEC_PSH_CLI_NPM} 'cd themes/classic/_dev; npm run watch'
+	# ${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
+	# ${EXEC_PSH_CLI_NPM} 'cd /admin-dev/themes/default; npm run watch'
+
+# psh-dev-front: guard-EXEC_PSH_CLI_NPM
+# 	${EXEC_PSH_CLI_NPM} 'make assets'
 

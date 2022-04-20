@@ -64,7 +64,45 @@ docker volume rm $(docker volume ls -q -f dangling=true)
 docker network rm $(docker network ls -q --filter type=custom)
 docker rmi $(docker images -a -q) -f
 docker builder prune -f
+docker system prune -a -f
 ```
+
+If you want to rebase your current branch to Prestashop/develop :
+```sh
+git remote add ps git@github.com:PrestaShop/PrestaShop.git
+git fetch ps
+git rebase -i ps/develop
+git push -f origin develop
+```
+
+If you need to solve conflicts during a rebase :
+```sh
+Resolve all conflicts manually, mark them as resolved with
+"git add/rm <conflicted_files>", then run "git rebase --continue".
+You can instead skip this commit: run "git rebase --skip".
+To abort and get back to the state before "git rebase", run "git rebase --abort".
+```
+
+If you want to change an old commit :
+> ```sh
+> git rebase --interactive '{commit id}^'
+> ```
+> Please note the caret ^ at the end of the command, because you need actually to rebase back to the commit before the one you wish to modify.
+> In the default editor, modify `pick` to `edit` in the line mentioning '{commit id}'.
+> 
+> Save the file and exit.
+>
+> At this point, '{commit id}' is your last commit (like if you just had created) and you can easily amend it.
+>
+> To end, run `git rebase --continue`
+> 
+> :point_up: More information :
+> - [Rewriting-history](https://backlog.com/git-tutorial/rewriting-history/) 
+> - [How to modify a specified commit?](https://stackoverflow.com/questions/1186535/how-to-modify-a-specified-commit)
+
+
+> **TODO** git bisect
+
 
 ## Usefull documentation
 
@@ -83,13 +121,10 @@ docker builder prune -f
 * [Submitting code changes](https://devdocs.prestashop.com/8/contribute/contribute-pull-requests/)
 * [Writing a good commit message](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/writing-a-good-commit-message/)
 * [Create a pull request](https://devdocs.prestashop.com/1.7/contribute/contribute-pull-requests/create-pull-request/)
-    ```shell
-    git remote add ps https://github.com/PrestaShop/PrestaShop.git
-    git fetch ps
-    git rebase -i ps/develop
-    git push -f origin develop
-    ```
 
+### Dev and stack documentation
+
+* [How To Debug PHP using Xdebug, VS Code and Docker](https://php.tutorials24x7.com/blog/how-to-debug-php-using-xdebug-visual-studio-code-and-docker-on-ubuntu)
 
 ## Todo
 
@@ -97,7 +132,10 @@ docker builder prune -f
   * [ ] Find a way to make gitmodule "url" compliant with prestashop contributing (parameterize to remove 'git@github.com:MeKeyCool/PrestaShop.git')
   * [ ] Enhance install with data (tests / demo / dev / ...)
     * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
+  * [ ] Add a complete cli install command
+    * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
 * Optimisation and project architecture
+  * [ ] Add some cache for phpstan and php_cs dev usage (not reset during psh-dev-reset)
   * [ ] Use dedicated "composer" image for composer commands ? 
   * [ ] Add composer cache local volume
   * [ ] Add tests commands
@@ -108,6 +146,7 @@ docker builder prune -f
   * [ ] Remove `sudo` usage from Makefile => enhance docker volume usage
   * [ ] Use a docker registry
     * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+  * [ ] create timeout parameter (proxy, php.ini)
 * Prestashop sources
   * [ ] Clean Prestashop src to ensure dedicated directories for install
     * [ ] Remove those directories from root source repository :
