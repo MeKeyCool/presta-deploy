@@ -397,5 +397,10 @@ psh-clean-cache: guard-EXEC_PSH_CLI_PHP
 
 # TODO : find a generic way to "npm run watch" a theme according dynamic choice. 
 psh-watch: guard-EXEC_PSH_CLI_NPM
-	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
+	${EXEC_PSH_CLI_NPM} 'cd themes/classic/_dev; npm run watch'
+	# ${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
+	# ${EXEC_PSH_CLI_NPM} 'cd /admin-dev/themes/default; npm run watch'
+
+# psh-dev-front: guard-EXEC_PSH_CLI_NPM
+# 	${EXEC_PSH_CLI_NPM} 'make assets'
 
