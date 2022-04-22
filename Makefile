@@ -399,3 +399,9 @@ psh-clean-cache: guard-EXEC_PSH_CLI_PHP
 psh-watch: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
 
+psh-dev-check-for-push: psh-apply-guidelines psh-test
+
+
+
+# Todo : fix headers
+# vendor/bin/header-stamp prestashop:licenses:update --license=/Users/mFerment/www/prestashop/blockreassurance/vendor/prestashop/header-stamp/assets/afl.txt
