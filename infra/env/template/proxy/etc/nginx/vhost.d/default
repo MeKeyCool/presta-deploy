@@ -1,5 +1,4 @@
-## TODO : review this file with letsencrypt container usage / review
-
+## Start of configuration add by letsencrypt container
 location ^~ /.well-known/acme-challenge/ {
     auth_basic off;
     auth_request off;
@@ -8,3 +7,4 @@ location ^~ /.well-known/acme-challenge/ {
     try_files $uri =404;
     break;
 }
+## End of configuration add by letsencrypt container

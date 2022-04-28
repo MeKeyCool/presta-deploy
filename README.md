@@ -21,19 +21,17 @@ In order to use this project properly, you need
 
 ### Local run
 
-> :warning: Current project requires to define `PROXY_BASE_HOSTNAME` has `prestashop.local` and to add it to your `hosts` file.
-
 1. For first install, configure your local environment 
     1. ``cp infra/env/deploy.env.template infra/env/deploy.env``
     2. Edit ``deploy.env`` values.
     3. ``make config-prepare-env``
     4. Edit all ``*.env`` values you need.
-    5. ``make config-apply-env``
+    5. ``make services-config-all``
     > :point_up: For more information, read [TODO : add documentation]()
 2. Up your environment : ``make env-init``
 
 **UNDER WORK** : add / review / comment install steps
-- Connect to your install : 
+- Connect to your install (take `PROXY_BASE_HOSTNAME` from `PROXY_BASE_HOSTNAME_LIST`): 
   - [auto-setup](${PROXY_BASE_HOSTNAME}/install-dev/index.php)
   - [front-office](${PROXY_BASE_HOSTNAME}/index.php)
   - [back-office](${PROXY_BASE_HOSTNAME}/admin-dev/index.php)
@@ -155,6 +153,7 @@ If you want to change an old commit :
 * Documentation and assets
   * [ ] Manage licensing
 * Proxy
-  * [ ] Find a proper setup to configure `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.local` with ${PROXY_BASE_HOSTNAME} file name under ${INFRA_ENV_PATH}} directory and to replace environment variables.
+  * [ ] Create timeout parameter to overwrite `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.proxy`
+  * [x] Find a proper setup to configure `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.local` with ${PROXY_BASE_HOSTNAME} file name under ${INFRA_ENV_PATH}} directory and to replace environment variables.
   * [ ] Remove hard coded `prestashop.local` in configurations (instead of ${PROXY_BASE_HOSTNAME})
 
