@@ -67,7 +67,7 @@ services:
       # Proxy integration
       # VIRTUAL_HOST: ${PROXY_BASE_HOSTNAME}
       # HTTPS_METHOD: noredirect
-      LETSENCRYPT_HOST: ${PROXY_BASE_HOSTNAME}
+      LETSENCRYPT_HOST: ${PROXY_BASE_HOSTNAME_LIST}
     expose:
       - 80
       - 443
