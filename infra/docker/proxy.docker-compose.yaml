@@ -3,10 +3,11 @@ version: '3.8'
 services:
 
   proxy.nginx:
-    image: jwilder/nginx-proxy:1.0
+    image: nginxproxy/nginx-proxy:1.0
     container_name: proxy.nginx
     volumes:
-      - ${INFRA_ENV_PATH}/proxy/etc/nginx/conf.d/prestashop.conf:/etc/nginx/conf.d/prestashop.conf:ro
+      # :point_up: rw is required due to specific docker image behavior
+      - ${INFRA_ENV_PATH}/proxy/etc/nginx/conf.d:/etc/nginx/conf.d:rw
       - proxy_html:/usr/share/nginx/html
       - proxy_dhparam:/etc/nginx/dhparam
       - proxy_vhost:/etc/nginx/vhost.d
@@ -23,7 +24,7 @@ services:
       - 443:443
 
   proxy.letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion:2.0
+    image: nginxproxy/acme-companion:2.2
     container_name: proxy.letsencrypt
     volumes:
       - proxy_html:/usr/share/nginx/html

@@ -1,0 +1,43 @@
+
+upstream ${PROXY_BASE_HOSTNAME}.http {
+	server psh.app:80;
+}
+
+upstream ${PROXY_BASE_HOSTNAME}.https {
+	server psh.app:443;
+}
+
+server {
+	server_name ${PROXY_BASE_HOSTNAME};
+	listen 80 ;
+
+	# TODO : create custom proxy log file by hostname 
+	access_log /var/log/nginx/access.log vhost;
+
+	include /etc/nginx/vhost.d/default;
+	include /etc/nginx/vhost.d/prestashop.proxy;
+	
+	location / {
+		proxy_pass http://${PROXY_BASE_HOSTNAME}.http;
+	}
+}
+
+server {
+	server_name ${PROXY_BASE_HOSTNAME};
+	listen 443 ssl http2 ;
+	
+	# TODO : create custom proxy log file by hostname 
+	access_log /var/log/nginx/access.log vhost;
+
+	ssl_certificate /etc/nginx/certs/default.crt;
+	ssl_certificate_key /etc/nginx/certs/default.key;
+
+	include /etc/nginx/vhost.d/prestashop.proxy;
+	
+	location / {
+		proxy_pass https://${PROXY_BASE_HOSTNAME}.https;
+		
+		## WARN : used for self-signed certs (local usage for example)
+		proxy_ssl_verify off;
+	}
+}

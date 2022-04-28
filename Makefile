@@ -11,8 +11,7 @@ export PROJECT_NAME = $(notdir $(PWD))
 
 # export CURRENT_DATE = $(shell date +"%Y%m%d")
 
-# export INFRA_SCRIPT_PATH = $(shell realpath ./scripts)
-# export INFRA_DATA_BASE_PATH = $(shell realpath ./data/${DEPLOY_ENV})
+export INFRA_SCRIPT_PATH = $(shell realpath ./scripts)
 export INFRA_DOCKER_PATH = $(shell realpath ./infra/docker)
 export INFRA_ENV_BASE_PATH = $(shell realpath ./infra/env)
 export INFRA_SRC_BASE_PATH = $(shell realpath ./src)
@@ -60,7 +59,7 @@ guard-%:
 ## Infra
 #########
 
-infra-init: infra-run services-init-all
+infra-init: services-config-all infra-run services-init-all
 	# make services-reload-all
 
 infra-run: guard-DOCKER_COMPOSE
@@ -174,14 +173,15 @@ config-restore: guard-INFRA_ENV_BASE_PATH guard-DEPLOY_ENV
 	- cp -r ${INFRA_ENV_BASE_PATH}/backup/${DEPLOY_ENV}/* ${INFRA_ENV_PATH}
 
 # This command builds "env files" and services configuration structures according template.
+# Todo : should check if ${INFRA_ENV_PATH} exists
 config-prepare-env:
 	mkdir -p ${INFRA_ENV_PATH}
 	cp -r ${INFRA_ENV_BASE_PATH}/template/* ${INFRA_ENV_PATH}
 
 # Remove environment variable names from services configuration files to apply their values
 # TODO : make envsubst quiet/silent
-config-apply-env: guard-INFRA_ENV_PATH
-	find ${INFRA_ENV_PATH} -type f | xargs -I {} sh -c "envsubst < {} | tee {}"
+# config-apply-env: guard-INFRA_ENV_PATH
+# 	find ${INFRA_ENV_PATH} -type f | xargs -I {} sh -c "envsubst < {} | tee {}"
 
 
 
@@ -284,6 +284,8 @@ docker-build-dev: guard-DOCKER_PSH_IMG guard-INFRA_DOCKER_PATH
 
 services-init-all: psh-init
 
+services-config-all: proxy-config
+
 # # TODO
 # services-backup-all:
 # 	echo "todo"
@@ -292,6 +294,12 @@ services-init-all: psh-init
 # services-restore-all:
 # 	echo "todo"
 
+
+## Proxy service admin
+#######################
+
+proxy-config:
+	@sh -c '${INFRA_SCRIPT_PATH}/proxy_configure.sh ${INFRA_ENV_PATH}/proxy/etc/nginx/conf.d ${PROXY_BASE_HOSTNAME_LIST}'
 
 
 ## Prestashop service admin
@@ -311,6 +319,7 @@ psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	# ${EXEC_PSH_CLI_PHP} 'php bin/console ...'
 
 # TODO : Add some variables to customize and ensure consistency.
+# TODO : How to manage PROXY_BASE_HOSTNAME from PROXY_BASE_HOSTNAME_LIST ?
 # Rq. according src/prestashop/install-dev/classes/datas.php, name is for shop name.
 # ${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_password=prestashop_admin --db_name=prestashop --db_create=1 --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin
 
@@ -363,9 +372,10 @@ psh-clean-env: guard-INFRA_DOCKER_PATH
 # TODO : add environment variables
 # TODO : fix access rights
 # TODO : check --db_create=1` usage
-psh-dev-reinstall: guard-EXEC_PSH_CLI_PHP
-	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
-	${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_user=prestashop_admin --db_password=prestashop_admin --db_name=prestashop --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin --db_create=1'
+# TODO : How to manage PROXY_BASE_HOSTNAME from PROXY_BASE_HOSTNAME_LIST ?
+# psh-dev-reinstall: guard-EXEC_PSH_CLI_PHP
+# 	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
+# 	${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_user=prestashop_admin --db_password=prestashop_admin --db_name=prestashop --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin --db_create=1'
 
 psh-dev-reset: psh-clean-artefacts
 	- docker stop $(shell docker ps -a -q)
