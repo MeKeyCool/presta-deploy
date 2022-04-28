@@ -135,6 +135,7 @@ If you want to change an old commit :
   * [ ] Add a complete cli install command
     * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
 * Optimisation and project architecture
+  * [ ] Take a look at https://github.com/jolelievre/ps-install-tools
   * [ ] Add some cache for phpstan and php_cs dev usage (not reset during psh-dev-reset)
   * [ ] Use dedicated "composer" image for composer commands ? 
   * [ ] Add composer cache local volume
