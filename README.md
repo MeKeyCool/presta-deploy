@@ -139,6 +139,8 @@ If you want to change an old commit :
     * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
   * [ ] Add a warning to env commands
 * Optimisation and project architecture
+  * [ ] Check `psh-clean-cache` command (it looks it breaks something, does it ?)
+  * [ ] Make `composer test-all` command works (can't create database -> use MySQL root user ?)
   * [ ] Script / command refactoring
     * Take a look at https://github.com/jolelievre/ps-install-tools
     * Take a look at src/prestashop/.github for CI actions / commands

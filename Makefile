@@ -393,7 +393,8 @@ psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	# ${EXEC_PSH_CLI_NPM} 'npm run scss-fix'
 
 psh-test: guard-EXEC_PSH_CLI_PHP
-	${EXEC_PSH_CLI_PHP} 'composer test-all'
+	${EXEC_PSH_CLI_PHP} 'composer unit-test'
+	# ${EXEC_PSH_CLI_PHP} 'composer test-all'
 	# ${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Grid/Definition/Factory/CustomerAddressGridDefinitionFactoryTest.php'
 
 # psh-test-integration: guard-EXEC_PSH_CLI_PHP
@@ -412,8 +413,9 @@ psh-test-stan: guard-EXEC_PSH_CLI_PHP
 # TODO add psh-test-sanity
 # HEADLESS=false URL_FO=https://prestashop.php73.local/ DB_NAME=prestashop DB_PASSWD=root npm run sanity-travis
 
-psh-clean-cache: guard-EXEC_PSH_CLI_PHP
-	${EXEC_PSH_CLI_PHP} 'php bin/console cache:clear'
+# Todo : find why does this command break the install
+# psh-clean-cache: guard-EXEC_PSH_CLI_PHP
+# 	${EXEC_PSH_CLI_PHP} 'php bin/console cache:clear'
 
 # TODO : find a generic way to "npm run watch" a theme according dynamic choice. 
 psh-watch: guard-EXEC_PSH_CLI_NPM
