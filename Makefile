@@ -377,6 +377,9 @@ psh-clean-env: guard-INFRA_DOCKER_PATH
 # 	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 # 	${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_user=prestashop_admin --db_password=prestashop_admin --db_name=prestashop --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin --db_create=1'
 
+psh-admin-fix-rights:
+	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
+
 psh-dev-reset: psh-clean-artefacts
 	- docker stop $(shell docker ps -a -q)
 	- docker rm -v $(shell docker ps -a -q)

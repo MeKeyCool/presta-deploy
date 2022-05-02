@@ -9,7 +9,7 @@ Thereby, presta-deploy manages environment, setup and dependencies questions for
 
 ## Requirements
 
-In order to use this project properly, you need
+In order to use this project on your environment, you need
 
 * [Docker Engine](https://docs.docker.com/engine/)
 * [Docker-compose](https://docs.docker.com/compose/)
@@ -127,33 +127,50 @@ If you want to change an old commit :
 ## Todo
 
 * Genericity and automation
-  * [ ] Find a way to make gitmodule "url" compliant with prestashop contributing (parameterize to remove 'git@github.com:MeKeyCool/PrestaShop.git')
+  * [ ] Rename all containers anme to be project dependant (I want to be able install several instances of the project on my PC) => review `env-docker-clean` command to clean only project docker objects.
+  * [ ] Make gitmodule "url" compliant with prestashop contributing (remove 'git@github.com:MeKeyCool/PrestaShop.git' from project dependency)
+    1. Configure project to use main Prestashop project
+    2. Configure your local git to replace Prestashop projects base url by your fork ones
+       https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
+    > :point_up: Please add `-b <branch>` parameter to properly follow branches
   * [ ] Enhance install with data (tests / demo / dev / ...)
     * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
   * [ ] Add a complete cli install command
     * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
+  * [ ] Add a warning to env commands
 * Optimisation and project architecture
-  * [ ] Take a look at https://github.com/jolelievre/ps-install-tools
+  * [ ] Script / command refactoring
+    * Take a look at https://github.com/jolelievre/ps-install-tools
+    * Take a look at src/prestashop/.github for CI actions / commands
   * [ ] Add some cache for phpstan and php_cs dev usage (not reset during psh-dev-reset)
-  * [ ] Use dedicated "composer" image for composer commands ? 
-  * [ ] Add composer cache local volume
-  * [ ] Add tests commands
-  * [ ] Add proxy for custom hostname
+  * [x] Add composer cache persistent volume
+  * [/] Add node/npm cache persistent volume (It looks the used volume isn't the right one)
+  * [/] Add tests commands (need some enhancement, genericity lacks)
+  * [x] Add proxy for custom hostname
   * [ ] Solve git flow with versionned submodules
-  * [ ] Docker images build / naming depending on php version, OS, etc.
-    * Create a deploy.env variable for php base image tag
-  * [ ] Remove `sudo` usage from Makefile => enhance docker volume usage
-  * [ ] Use a docker registry
-    * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
-  * [ ] create timeout parameter (proxy, php.ini)
+    * Take a look at https://git-scm.com/docs/git-update-index#_skip_worktree_bit option
+      > :warning: Take a look at git version and submodule specific behaviors. This option may be tricky.
+      >
+      > :question: Can I still work inside submodule project with this option ?
+  * [ ] Docker images build
+    * [ ] Take a look at multi-stage builds. Use docker-compose `build` section with `context`, `target`, `args`
+          doc : 
+            https://docs.docker.com/develop/develop-images/multistage-build/
+            https://docs.docker.com/compose/compose-file/build/
+          example : https://stackoverflow.com/questions/36362233/can-a-dockerfile-extend-another-one
+    * [ ] naming depending on php version, OS, etc.
+    * [ ] Create a deploy.env variable for php base image tag
+    * [ ] Create dedicated "composer" image for composer commands ? 
+  * [ ] Remove `sudo` usage from Makefile => enhance docker volume usage => review Prestashop directories usage.
 * Prestashop sources
   * [ ] Clean Prestashop src to ensure dedicated directories for install
     * [ ] Remove those directories from root source repository :
       * admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var
 * Documentation and assets
   * [ ] Manage licensing
+  * [ ] Review basic documentation on Prestashop-deploy project
 * Proxy
-  * [ ] Create timeout parameter to overwrite `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.proxy`
+  * [ ] Create timeout parameter to overwrite `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.proxy` (take a look to php.ini as well)
   * [x] Find a proper setup to configure `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.local` with ${PROXY_BASE_HOSTNAME} file name under ${INFRA_ENV_PATH}} directory and to replace environment variables.
-  * [ ] Remove hard coded `prestashop.local` in configurations (instead of ${PROXY_BASE_HOSTNAME})
+  * [x] Remove hard coded `prestashop.local` in configurations (instead of ${PROXY_BASE_HOSTNAME})
 
