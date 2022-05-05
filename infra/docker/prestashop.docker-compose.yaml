@@ -26,7 +26,8 @@ services:
 
   psh.cli.npm:
     # image: node:17.6-bullseye
-    image: node:14.19-buster
+    # image: node:14.19-buster
+    image: node:16.15-buster
     container_name: psh.cli.npm
     hostname: psh.cli.npm
     user: ${CURRENT_UID}
@@ -36,7 +37,11 @@ services:
       - ${INFRA_DOCKER_PATH}/prestashop/cache/npm:/.npm:rw
     networks:
       - psh_backend
-
+    # This command should fix `Internal watch failed: ENOSPC: System limit for number of file watchers reached, watch ...` problem
+    command: >
+      sh -c "echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf && 
+        sysctl -p"
+  
   psh.cli.php:
     image: ${DOCKER_PSH_IMG}
     container_name: psh.cli.php
