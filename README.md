@@ -127,49 +127,73 @@ If you want to change an old commit :
 ## Todo
 
 * Genericity and automation
-  * [ ] Rename all containers anme to be project dependant (I want to be able install several instances of the project on my PC) => review `env-docker-clean` command to clean only project docker objects.
+  * [ ] Multi prestashop version management
+    * [ ] Solve git flow with versionned submodules
+      * Take a look at https://git-scm.com/docs/git-update-index#_skip_worktree_bit option
+        > :warning: Take a look at git version and submodule specific behaviors. This option may be tricky.
+        >
+        > :question: Can I still work inside submodule project with this option ?
+    * [ ] Add `INFRA_SRC_PSH_BASE_BRANCH` parameter to `infra/env/deploy.env.template` (default value defined in Makefile : `develop`)
+      * Create `src/prestashop/{INFRA_SRC_PSH_BASE_BRANCH}` submodules
+      * update `INFRA_SRC_PSH` and `INFRA_ENV_PATH` with `INFRA_SRC_PSH_BASE_BRANCH`
+    * [ ] Branch naming convention
+      * Convention : `{INFRA_SRC_PSH_BASE_BRANCH}/{type}/{issue #}/{specific_label}` 
+      * Create a dedicated command (script ?) `psh-dev-prepare-branch`
+        > ```sh
+        > cd $INFRA_SRC_PSH
+        > git diff --exit-code
+        > git checkout {INFRA_SRC_PSH_BASE_BRANCH}
+        > git fetch ...; git rebase; # should we force push {INFRA_SRC_PSH_BASE_BRANCH} ?
+        > # Add a script to define new branch name (product/bugfix/feature/tmp/... type, issue # and specific label)
+        > git checkout -b {new_branch_name}
+        > ```
+    * [ ] Organize project with source version dependant scripts (install / update / backup / ...) may change with versions.
+  * [ ] Rename all containers name to be project dependant (I want to be able install several instances of the project on my PC) => review `env-docker-clean` command to clean only project docker objects.
   * [ ] Make gitmodule "url" compliant with prestashop contributing (remove 'git@github.com:MeKeyCool/PrestaShop.git' from project dependency)
     1. Configure project to use main Prestashop project
     2. Configure your local git to replace Prestashop projects base url by your fork ones
        https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
     > :point_up: Please add `-b <branch>` parameter to properly follow branches
-  * [ ] Enhance install with data (tests / demo / dev / ...)
-    * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
+  * Enhance fixtures management 
+    * [ ] Prestashop backup / restore commands
+    * [ ] Allow init with data (tests / demo / dev / ...)
+      * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
   * [ ] Add a complete cli install command
     * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
-  * [ ] Add a warning to env commands
+  * [ ] Add a warning to env commands (Y/n option)
 * Optimisation and project architecture
   * [ ] Check `psh-clean-cache` command (it looks it breaks something, does it ?)
   * [ ] Make `composer test-all` command works (can't create database -> use MySQL root user ?)
-  * [ ] Script / command refactoring
+  * [ ] Script / command refactoring & enhancement
     * Take a look at https://github.com/jolelievre/ps-install-tools
     * Take a look at src/prestashop/.github for CI actions / commands
-  * [ ] Add some cache for phpstan and php_cs dev usage (not reset during psh-dev-reset)
+  * [ ] Add some cache for phpstan and php_cs dev usage (specific reset for "env cache" and not reset during psh-dev-reset)
   * [x] Add composer cache persistent volume
-  * [/] Add node/npm cache persistent volume (It looks the used volume isn't the right one)
-  * [/] Add tests commands (need some enhancement, genericity lacks)
+  * [/] Add node/npm cache persistent volume (It looks the used volume isn't enough)
   * [x] Add proxy for custom hostname
-  * [ ] Solve git flow with versionned submodules
-    * Take a look at https://git-scm.com/docs/git-update-index#_skip_worktree_bit option
-      > :warning: Take a look at git version and submodule specific behaviors. This option may be tricky.
-      >
-      > :question: Can I still work inside submodule project with this option ?
   * [ ] Docker images build
     * [ ] Take a look at multi-stage builds. Use docker-compose `build` section with `context`, `target`, `args`
           doc : 
             https://docs.docker.com/develop/develop-images/multistage-build/
             https://docs.docker.com/compose/compose-file/build/
           example : https://stackoverflow.com/questions/36362233/can-a-dockerfile-extend-another-one
+    * [ ] Consider new multiple build context docker feature
+          doc :
+            https://www.docker.com/blog/dockerfiles-now-support-multiple-build-contexts/
     * [ ] naming depending on php version, OS, etc.
     * [ ] Create a deploy.env variable for php base image tag
-    * [ ] Create dedicated "composer" image for composer commands ? 
+    * [ ] Create dedicated "composer" image for composer commands ?
+      * Take a look at some tools
+        * https://github.com/nenes25/prestashop_console
+        * https://github.com/friends-of-presta/fop_console
   * [ ] Remove `sudo` usage from Makefile => enhance docker volume usage => review Prestashop directories usage.
 * Prestashop sources
   * [ ] Clean Prestashop src to ensure dedicated directories for install
     * [ ] Remove those directories from root source repository :
       * admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var
 * Documentation and assets
-  * [ ] Manage licensing
+  * [x] Manage licensing
+        https://choosealicense.com/appendix/
   * [ ] Review basic documentation on Prestashop-deploy project
 * Proxy
   * [ ] Create timeout parameter to overwrite `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.proxy` (take a look to php.ini as well)
