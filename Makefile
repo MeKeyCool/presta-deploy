@@ -74,17 +74,16 @@ infra-stop: guard-DOCKER_COMPOSE
 # we dissociate 'env' from 'infra' to avoid deployment "mistakes"; env is reserved for "risky" operations
 
 # First local install (WARNING : needs pre-configuration, cf. Readme)
-env-init: 
-	git submodule update --init
-	make docker-build-dev
-	make infra-init
+# env-init: 
+# 	make infra-init
 
 # Usefull for prestashop-deploy dev purpose : reset environment to fresh configured project 
 env-reset: clean-all env-docker-clean config-restore
 	rm -rf ${INFRA_SRC_PSH}
+	git submodule update --init
 
 # Usefull for prestashop-deploy dev purpose : rebuild environment to test docker and environment 
-env-rebuild: psh-clean-artefacts env-docker-clean docker-build-dev infra-init
+# env-rebuild: psh-clean-artefacts env-docker-clean docker-build-dev infra-init
 	
 # Complete docker environment purge
 # WARNING : This command will purge all docker environment (all projects) 
@@ -255,14 +254,12 @@ shell-proxy.letsencrypt: guard-DOCKER_COMPOSE
 ##########
 
 #  TODO : review docker build directory (depends on environments ?)
-docker-build-dev: guard-DOCKER_PSH_IMG guard-INFRA_DOCKER_PATH
-	- docker image rm ${DOCKER_PSH_IMG}
-	docker build \
-		--build-arg working_dir=/var/www/html \
-		-t ${DOCKER_PSH_IMG} -f ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.7.4.dev ${INFRA_DOCKER_PATH}/build
-	# docker build \
-	# 	--build-arg working_dir=/var/www/html \
-	# 	-t ${DOCKER_PSH_IMG} -f ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.7.2.dev ${INFRA_DOCKER_PATH}/build
+# docker-build-dev: guard-DOCKER_PSH_IMG guard-INFRA_DOCKER_PATH
+# 	- docker image rm ${DOCKER_PSH_IMG}
+# 	docker build \
+# 		--build-arg working_dir=/var/www/html \
+# 		-t ${DOCKER_PSH_IMG} -f ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.7.4.dev ${INFRA_DOCKER_PATH}/build
+
 
 # docker-login-dev: guard-DOCKER_REGISTRY_TOKEN guard-DOCKER_REGISTRY_USER guard-DOCKER_REGISTRY_BASE_PATH
 # 	@echo "Docker login (command not logged for security purpose)"
@@ -323,7 +320,7 @@ psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 # Rq. according src/prestashop/install-dev/classes/datas.php, name is for shop name.
 # ${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_password=prestashop_admin --db_name=prestashop --db_create=1 --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin
 
-psh-clean-all: psh-clean-artefacts psh-clean-env
+psh-clean-all: psh-clean-artefacts
 
 # TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
 # TODO : find a way to remove sudos
@@ -385,6 +382,7 @@ psh-dev-install-shop: guard-EXEC_PSH_CLI_PHP psh-admin-fix-rights
 		--email=mekeycool@prestashop.com \
 		--password=adminadmin \
 		--db_create=1'
+	make psh-admin-fix-rights
 
 psh-admin-fix-rights:
 	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
@@ -442,6 +440,7 @@ psh-dev-check-for-push: psh-apply-guidelines psh-test
 # Todo : create scripts with user friendly module install interface
 # UNDER WORK
 # psh-dev-install-fop-console: guard-EXEC_PSH_CLI_PHP guard-INFRA_SRC_PSH
+# 	-cd ${INFRA_SRC_PSH}/modules; rm -rf fop_console
 # 	-cd ${INFRA_SRC_PSH}/modules; git clone git@github.com:MeKeyCool/fop_console.git
 # 	${EXEC_PSH_CLI_PHP} 'cd modules/fop_console; composer install'
 # 	${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo install fop_console'

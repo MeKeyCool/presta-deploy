@@ -1,8 +1,23 @@
 version: '3.8'
 
+# WARN : no merge for list with yaml extension fields => we can't add volumes
+x-php-service-build: &php-service-build
+  image: ${DOCKER_PSH_IMG}
+  build:
+    context: ${INFRA_DOCKER_PATH}/build/
+    dockerfile: ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.7.4.dev
+    args:
+      - working_dir=/var/www/html
+  depends_on:
+    psh.db:
+      condition: service_healthy
+  extra_hosts:
+    - "host.docker.internal:host-gateway" # necessary for xdebug reverse networking
+
+
 services:
 
-# TODO : review with install
+  # TODO : review with install / restore / test db / ...
   psh.db:
     image: mysql:5.7-debian
     container_name: psh.db
@@ -41,33 +56,28 @@ services:
     command: >
       sh -c "echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf && 
         sysctl -p"
-  
+
   psh.cli.php:
-    image: ${DOCKER_PSH_IMG}
+    <<: *php-service-build
     container_name: psh.cli.php
     hostname: psh.cli.php
     user: ${CURRENT_UID}
     command: service apache2 stop # stop useless apache while images not dissociated
     volumes:
       - ${INFRA_SRC_PSH}:/var/www/html:rw
-      - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
       - ${INFRA_DOCKER_PATH}/prestashop/cache/composer:/tmp/composer:rw
-      - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini:ro
+      - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
       - ${INFRA_ENV_PATH}/xdebug/psh.cli.php:/var/logs/xdebug:rw
     environment:
       - COMPOSER_HOME=/tmp/composer
       # - COMPOSER_HOME=${INFRA_COMPOSER_HOME:-$HOME/.config/composer}
       # - COMPOSER_CACHE_DIR=${INFRA_COMPOSER_CACHE_DIR:-$HOME/.cache/composer}
-    depends_on:
-      psh.db:
-        condition: service_healthy
     networks:
       - psh_backend
-    extra_hosts:
-      - "host.docker.internal:host-gateway" # necessary for xdebug reverse networking
-      
+
   psh.app:
-    image: ${DOCKER_PSH_IMG}
+    <<: *php-service-build
     container_name: psh.app
     hostname: psh.app
     restart: always
@@ -81,23 +91,20 @@ services:
       - 80
       - 443
     volumes:
+      - ${INFRA_DOCKER_PATH}/prestashop/cache/composer:/tmp/composer:rw
       - ${INFRA_SRC_PSH}:/var/www/html:delegated
-      - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
-      - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
-      - ${INFRA_ENV_PATH}/xdebug/psh.app:/var/logs/xdebug
       # TODO : review this volume usage once Prestashop ssl management properly configured.
       # cf. Dockerfile for consistency.
       - proxy_certs:/etc/nginx/certs
+      - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini:ro
+      - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+      - ${INFRA_ENV_PATH}/xdebug/psh.app:/var/logs/xdebug:rw
     depends_on:
-      psh.db:
-        condition: service_healthy
       proxy.letsencrypt:
         condition: service_started
     networks:
       - psh_backend
       - endpoints
-    extra_hosts:
-      - "host.docker.internal:host-gateway" # necessary for xdebug reverse networking
 
 volumes:
   psh_db_data:
@@ -109,7 +116,6 @@ volumes:
   #     type: none
   #     device: ${INFRA_ENV_PATH}/prestashop/docker-entrypoint-initdb.d
 
-    
 networks:
   psh_backend:
     name: ${DOCKER_NETWORK}/psh.backend

@@ -172,7 +172,7 @@ If you want to change an old commit :
   * [/] Add node/npm cache persistent volume (It looks the used volume isn't enough)
   * [x] Add proxy for custom hostname
   * [ ] Docker images build
-    * [ ] Take a look at multi-stage builds. Use docker-compose `build` section with `context`, `target`, `args`
+    * [/] Take a look at multi-stage builds. Use docker-compose `build` section with `context`, `target`, `args`
           doc : 
             https://docs.docker.com/develop/develop-images/multistage-build/
             https://docs.docker.com/compose/compose-file/build/
