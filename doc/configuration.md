@@ -1,4 +1,4 @@
-# Prest-deploy configuration
+# Prests-deploy configuration
 
 This documentation describes basic principles of presta-deploy configuration.
 
@@ -50,3 +50,33 @@ If you have *.env files, variables from env files are used.
 If files not defined, variables are defined from environment.
 
 If you don't have .env files neiher environment variables, you should encounter some weird behaviour.
+
+
+## Xdebug configuration
+
+Some usefull links :
+- https://dev.to/jackmiras/xdebug-in-vscode-with-docker-379l
+- https://php.tutorials24x7.com/blog/how-to-debug-php-using-xdebug-visual-studio-code-and-docker-on-ubuntu
+- https://stackoverflow.com/questions/48546124/what-is-linux-equivalent-of-host-docker-internal/67158212#67158212
+
+VSCode example :
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Listen psh",
+            "type": "php",
+            "request": "launch",
+            "port": 9004,
+            "pathMappings": {
+                "/var/www/html": "${workspaceRoot}/src/prestashop"
+            }
+        },
+    ]
+}
+```
+
+> :notice: If you have any doubt, check `infra/docker/prestashop.docker-compose.yaml` and `infra/env/data/{DEPLOY_ENV}/prestashop/xdebug.ini` for parameter values
+
+> :point_up: Take a look at https://code.visualstudio.com/docs/editor/debugging#_launch-configurations

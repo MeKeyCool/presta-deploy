@@ -158,7 +158,7 @@ If you want to change an old commit :
     * [ ] Prestashop backup / restore commands
     * [ ] Allow init with data (tests / demo / dev / ...)
       * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
-  * [ ] Add a complete cli install command
+  * [x] Add a complete cli install command
     * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
   * [ ] Add a warning to env commands (Y/n option)
 * Optimisation and project architecture

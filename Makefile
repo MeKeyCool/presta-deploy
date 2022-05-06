@@ -360,7 +360,7 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 		find vendor 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess'					   | xargs -I {} sh -c "sudo rm -rf {}"
 
 # TODO : shouldn't we move this cache to env/data ?
-psh-clean-env: guard-INFRA_DOCKER_PATH
+psh-clean-infra-cache: guard-INFRA_DOCKER_PATH
 	@echo "=== Remove npm and composer caches" 
 	find ${INFRA_DOCKER_PATH}/prestashop/cache/npm      -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
 	find ${INFRA_DOCKER_PATH}/prestashop/cache/composer -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
@@ -372,10 +372,19 @@ psh-clean-env: guard-INFRA_DOCKER_PATH
 # TODO : add environment variables
 # TODO : fix access rights
 # TODO : check --db_create=1` usage
-# TODO : How to manage PROXY_BASE_HOSTNAME from PROXY_BASE_HOSTNAME_LIST ?
-# psh-dev-reinstall: guard-EXEC_PSH_CLI_PHP
-# 	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
-# 	${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_user=prestashop_admin --db_password=prestashop_admin --db_name=prestashop --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin --db_create=1'
+psh-dev-install-shop: guard-EXEC_PSH_CLI_PHP psh-admin-fix-rights
+	${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php \
+		--language=en \
+		--country=fr \
+		--domain=$(shell echo "$(PROXY_BASE_HOSTNAME_LIST)" | head -n1 | cut -d "," -f1) \
+		--db_server=psh.db \
+		--db_user=prestashop_admin \
+		--db_password=prestashop_admin \
+		--db_name=prestashop \
+		--name=MeKeyShop \
+		--email=mekeycool@prestashop.com \
+		--password=adminadmin \
+		--db_create=1'
 
 psh-admin-fix-rights:
 	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
@@ -428,6 +437,15 @@ psh-watch: guard-EXEC_PSH_CLI_NPM
 # 	${EXEC_PSH_CLI_NPM} 'make assets'
 
 psh-dev-check-for-push: psh-apply-guidelines psh-test
+
+# Todo : configure commands to use `git@github.com:friends-of-presta/fop_` and git to replace `git@github.com:friends-of-presta/fop_` by `git@github.com:MeKeyCool/fop_`
+# Todo : create scripts with user friendly module install interface
+# UNDER WORK
+# psh-dev-install-fop-console: guard-EXEC_PSH_CLI_PHP guard-INFRA_SRC_PSH
+# 	-cd ${INFRA_SRC_PSH}/modules; git clone git@github.com:MeKeyCool/fop_console.git
+# 	${EXEC_PSH_CLI_PHP} 'cd modules/fop_console; composer install'
+# 	${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo install fop_console'
+# 	# ${EXEC_PSH_CLI_PHP} 'php bin/console fop:about:version'
 
 # Todo : fix headers
 # vendor/bin/header-stamp prestashop:licenses:update --license=/Users/mFerment/www/prestashop/blockreassurance/vendor/prestashop/header-stamp/assets/afl.txt

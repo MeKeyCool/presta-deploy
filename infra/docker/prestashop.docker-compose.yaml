@@ -52,6 +52,8 @@ services:
       - ${INFRA_SRC_PSH}:/var/www/html:rw
       - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
       - ${INFRA_DOCKER_PATH}/prestashop/cache/composer:/tmp/composer:rw
+      - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ${INFRA_ENV_PATH}/xdebug/psh.cli.php:/var/logs/xdebug:rw
     environment:
       - COMPOSER_HOME=/tmp/composer
       # - COMPOSER_HOME=${INFRA_COMPOSER_HOME:-$HOME/.config/composer}
@@ -61,7 +63,9 @@ services:
         condition: service_healthy
     networks:
       - psh_backend
-
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # necessary for xdebug reverse networking
+      
   psh.app:
     image: ${DOCKER_PSH_IMG}
     container_name: psh.app
@@ -76,13 +80,11 @@ services:
     expose:
       - 80
       - 443
-    ports:
-      - 9000:9000 # XDebug
     volumes:
       - ${INFRA_SRC_PSH}:/var/www/html:delegated
       - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini
       - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
-      - ${INFRA_ENV_PATH}/xdebug:/var/logs/xdebug
+      - ${INFRA_ENV_PATH}/xdebug/psh.app:/var/logs/xdebug
       # TODO : review this volume usage once Prestashop ssl management properly configured.
       # cf. Dockerfile for consistency.
       - proxy_certs:/etc/nginx/certs
@@ -94,6 +96,8 @@ services:
     networks:
       - psh_backend
       - endpoints
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # necessary for xdebug reverse networking
 
 volumes:
   psh_db_data:
