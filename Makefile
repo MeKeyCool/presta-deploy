@@ -208,7 +208,7 @@ shell-psh.db: guard-EXEC_PSH_DB
 	${EXEC_PSH_DB} '/bin/bash'
 
 shell-psh.mysql: guard-EXEC_PSH_DB
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin'
+	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin prestashop'
 
 shell-psh.app: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} '/bin/bash'
@@ -434,7 +434,7 @@ psh-watch: guard-EXEC_PSH_CLI_NPM
 # psh-dev-front: guard-EXEC_PSH_CLI_NPM
 # 	${EXEC_PSH_CLI_NPM} 'make assets'
 
-psh-dev-check-for-push: psh-apply-guidelines psh-test
+psh-dev-check-for-commit: psh-apply-guidelines psh-test
 
 # Todo : configure commands to use `git@github.com:friends-of-presta/fop_` and git to replace `git@github.com:friends-of-presta/fop_` by `git@github.com:MeKeyCool/fop_`
 # Todo : create scripts with user friendly module install interface
