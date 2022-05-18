@@ -309,10 +309,12 @@ proxy-config:
 
 
 # TODO : deep clean of directory structure (cache and logs)
+# Please notice that composer `--prefer-install=source` option is made for local development (keep .git in dependencies)
+# Todo : make `--prefer-install=source` optional for development environment
 psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_PHP} 'mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
-	${EXEC_PSH_CLI_PHP} 'composer install'
+	${EXEC_PSH_CLI_PHP} 'composer install --prefer-install=source' 
 	${EXEC_PSH_CLI_PHP} 'touch .htaccess'
 	${EXEC_PSH_CLI_NPM} 'make assets'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
@@ -452,7 +454,7 @@ psh-dev-check-hummigbird-for-commit:
 psh-dev-install-fop-console: guard-EXEC_PSH_CLI_PHP guard-INFRA_SRC_PSH
 	-${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo uninstall fop_console'
 	-cd ${INFRA_SRC_PSH}/modules; rm -rf fop_console
-	-cd ${INFRA_SRC_PSH}/modules; git clone git@github.com:Prestashop/fop_console.git
+	-cd ${INFRA_SRC_PSH}/modules; git clone git@github.com:friends-of-presta/fop_console.git
 	${EXEC_PSH_CLI_PHP} 'cd modules/fop_console; composer install'
 	${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo install fop_console'
 	${EXEC_PSH_CLI_PHP} 'php bin/console -vvv fop:about:version'
