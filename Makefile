@@ -319,16 +319,12 @@ psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	# ./tools/assets/build.sh
 	# ${EXEC_PSH_CLI_PHP} 'php bin/console ...'
 
-# TODO : Add some variables to customize and ensure consistency.
-# TODO : How to manage PROXY_BASE_HOSTNAME from PROXY_BASE_HOSTNAME_LIST ?
-# Rq. according src/prestashop/install-dev/classes/datas.php, name is for shop name.
-# ${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php --language=en --country=fr --domain=${PROXY_BASE_HOSTNAME} --db_server=psh.db --db_password=prestashop_admin --db_name=prestashop --db_create=1 --name=MeKeyShop --email=mekeycool@prestashop.com --password=adminadmin
-
 psh-clean-all: psh-clean-artefacts
 
 # TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
 # TODO : find a way to remove sudos
 # TODO : problem to fix with img
+# TODO : add admin-dev/export admin-dev/import directories
 # TO REVIEW : should ${INFRA_DOCKER_PATH}/prestashop/cache/* be considered as service directories ? => clean only with env-* commands ?
 psh-clean-artefacts: guard-INFRA_SRC_PSH
 	@echo "=== Remove install/dev artefacts"
@@ -372,9 +368,10 @@ psh-clean-infra-cache: guard-INFRA_DOCKER_PATH
 # TODO : under tests commands
 ##############################
 
-# TODO : add environment variables
+# TODO : add environment variables to customize and ensure consistency (name / email / password).
 # TODO : fix access rights
 # TODO : check --db_create=1` usage
+# Please notice shop is installed from first hostname off $PROXY_BASE_HOSTNAME_LIST
 psh-dev-install-shop: guard-EXEC_PSH_CLI_PHP psh-admin-fix-rights
 	${EXEC_PSH_CLI_PHP} 'php install-dev/index_cli.php \
 		--language=en \
@@ -391,7 +388,7 @@ psh-dev-install-shop: guard-EXEC_PSH_CLI_PHP psh-admin-fix-rights
 	make psh-admin-fix-rights
 
 psh-admin-fix-rights:
-	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
+	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade admin-dev/export admin-dev/import app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 
 psh-dev-reset: infra-reset infra-init psh-dev-install-shop infra-run
 
@@ -455,7 +452,7 @@ psh-dev-check-hummigbird-for-commit:
 psh-dev-install-fop-console: guard-EXEC_PSH_CLI_PHP guard-INFRA_SRC_PSH
 	-${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo uninstall fop_console'
 	-cd ${INFRA_SRC_PSH}/modules; rm -rf fop_console
-	-cd ${INFRA_SRC_PSH}/modules; git clone git@github.com:MeKeyCool/fop_console.git
+	-cd ${INFRA_SRC_PSH}/modules; git clone git@github.com:Prestashop/fop_console.git
 	${EXEC_PSH_CLI_PHP} 'cd modules/fop_console; composer install'
 	${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo install fop_console'
 	${EXEC_PSH_CLI_PHP} 'php bin/console -vvv fop:about:version'
@@ -471,7 +468,7 @@ psh-dev-fop-console-apply-guidelines: guard-EXEC_PSH_CLI_PHP
 #  	- How to manage multishop ?
 psh-dev-install-hummingbird: guard-EXEC_PSH_CLI_NPM guard-INFRA_SRC_PSH
 	-cd ${INFRA_SRC_PSH}/themes; rm -rf hummingbird
-	-cd ${INFRA_SRC_PSH}/themes; git clone git@github.com:MeKeyCool/hummingbird.git
+	-cd ${INFRA_SRC_PSH}/themes; git clone git@github.com:Prestashop/hummingbird.git
 	@echo "generating .env"
 	@cd ${INFRA_SRC_PSH}/themes/hummingbird/webpack; \
 		rm -f ./.env; \

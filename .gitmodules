@@ -1,4 +1,4 @@
 [submodule "src/prestashop"]
 	path = src/prestashop
-	url = git@github.com:MeKeyCool/PrestaShop.git
+	url = git@github.com:PrestaShop/PrestaShop.git
 	branch = develop

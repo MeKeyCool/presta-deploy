@@ -19,27 +19,29 @@ In order to use this project on your environment, you need
 
 ## Deployment
 
-### Local run
+### Local install
 
 1. For first install, configure your local environment 
     1. ``cp infra/env/deploy.env.template infra/env/deploy.env``
     2. Edit ``deploy.env`` values.
     3. ``make config-prepare-env``
-    4. Edit all ``*.env`` values you need.
+    4. Edit all required ``infra/env/data/${DEPLOY_ENV}/*.env`` values and customize what you want.
     5. ``make services-config-all``
-    > :point_up: For more information, read [TODO : add documentation]()
-2. Up your environment : ``make env-init``
-
-**UNDER WORK** : add / review / comment install steps
-- Connect to your install (take `PROXY_BASE_HOSTNAME` from `PROXY_BASE_HOSTNAME_LIST`): 
-  - [auto-setup](${PROXY_BASE_HOSTNAME}/install-dev/index.php)
-  - [front-office](${PROXY_BASE_HOSTNAME}/index.php)
-  - [back-office](${PROXY_BASE_HOSTNAME}/admin-dev/index.php)
+    > :point_up: For more information, read [TODO : add proxy configuration documentation]()
+2. Deploy your local environment : ``make env-init``
 
 
-> :point_up: Take a look to `Makefile` commands. USefull for prestashop stack deployment.
+> :point_up: Connect to your install (take `PROXY_BASE_HOSTNAME` from `PROXY_BASE_HOSTNAME_LIST`): 
+> - **auto-setup** : https://{PROXY_BASE_HOSTNAME}/install-dev/index.php
+> - **front-office** : https://{PROXY_BASE_HOSTNAME}/index.php
+> - **back-office** : https://{PROXY_BASE_HOSTNAME}/admin-dev/index.php
+
+
+> :point_up: Take a look to `Makefile` commands. Usefull to understand Prestashop install/deployment.
 
 > :point_up: Please notice that `presta-deploy` uses git submodules.
+
+> :point_up: If you configured custom host with `PROXY_BASE_HOSTNAME_LIST`, you may want to [edit your `hosts` file](https://www.howtogeek.com/howto/27350/beginner-geek-how-to-edit-your-hosts-file/).
 
 
 ### Docker usage
@@ -52,7 +54,31 @@ In order to use this project on your environment, you need
 
 ## Development
 
-### Tools and commands
+### Contributing
+
+If you want to use this project for Prestashop organization projects contribution, please start reading official guidelines :
+* [Contributing](https://github.com/PrestaShop/PrestaShop/blob/develop/CONTRIBUTING.md)
+* [Contribution guidelines](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/)
+* [Coding Standards](https://devdocs.prestashop.com/1.7/development/coding-standards/)
+* [Submitting code changes](https://devdocs.prestashop.com/8/contribute/contribute-pull-requests/)
+* [Writing a good commit message](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/writing-a-good-commit-message/)
+* [Create a pull request](https://devdocs.prestashop.com/1.7/contribute/contribute-pull-requests/create-pull-request/)
+
+Once you are aware about Prestashop expectations, you may want to adapt your git configuration to push your local modifications to your own forks.
+
+For example, you may want to edit `~/.gitconfig` adding some lines :
+```
+[url "git@github.com:MyGithubAccount/"]
+  pushInsteadOf = https://github.com/PrestaShop/
+  pushInsteadOf = git@github.com:PrestaShop/
+```
+
+> cf. https://jonhnnyweslley.net/blog/how-to-rewrite-git-urls-to-clone-faster-and-push-safer/ for some simple explanations
+> 
+> :point_up: Please notice you'll need to fork the project you want to contribute before to push your local work.
+
+
+### Tools and usefull commands
 
 You may need to clean all your local Docker environment :
 ```sh
@@ -111,15 +137,6 @@ If you want to change an old commit :
 * [Install Docker Engine](https://docs.docker.com/engine/install/)
 * [Install Docker Compose](https://docs.docker.com/compose/install/)
 
-### Prestashop specific documentation
-
-* [Contributing](https://github.com/PrestaShop/PrestaShop/blob/develop/CONTRIBUTING.md)
-* [Contribution guidelines](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/)
-* [Coding Standards](https://devdocs.prestashop.com/1.7/development/coding-standards/)
-* [Submitting code changes](https://devdocs.prestashop.com/8/contribute/contribute-pull-requests/)
-* [Writing a good commit message](https://devdocs.prestashop.com/1.7/contribute/contribution-guidelines/writing-a-good-commit-message/)
-* [Create a pull request](https://devdocs.prestashop.com/1.7/contribute/contribute-pull-requests/create-pull-request/)
-
 ### Dev and stack documentation
 
 * [How To Debug PHP using Xdebug, VS Code and Docker](https://php.tutorials24x7.com/blog/how-to-debug-php-using-xdebug-visual-studio-code-and-docker-on-ubuntu)
@@ -149,7 +166,7 @@ If you want to change an old commit :
         > ```
     * [ ] Organize project with source version dependant scripts (install / update / backup / ...) may change with versions.
   * [ ] Rename all containers name to be project dependant (I want to be able install several instances of the project on my PC) => review `env-docker-clean` command to clean only project docker objects.
-  * [ ] Make gitmodule "url" compliant with prestashop contributing (remove 'git@github.com:MeKeyCool/PrestaShop.git' from project dependency)
+  * [x] Make gitmodule "url" compliant with prestashop contributing (remove 'git@github.com:MeKeyCool/PrestaShop.git' from project dependency)
     1. Configure project to use main Prestashop project
     2. Configure your local git to replace Prestashop projects base url by your fork ones
        https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
