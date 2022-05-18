@@ -71,6 +71,8 @@ infra-watch: infra-run logs
 infra-stop: guard-DOCKER_COMPOSE 
 	${DOCKER_COMPOSE} stop
 
+infra-reset: clean-all env-docker-clean config-restore
+
 # we dissociate 'env' from 'infra' to avoid deployment "mistakes"; env is reserved for "risky" operations
 
 # First local install (WARNING : needs pre-configuration, cf. Readme)
@@ -78,13 +80,13 @@ infra-stop: guard-DOCKER_COMPOSE
 # 	make infra-init
 
 # Usefull for prestashop-deploy dev purpose : reset environment to fresh configured project 
-env-reset: clean-all env-docker-clean config-restore
+env-reset: infra-reset psh-clean-infra-cache
 	rm -rf ${INFRA_SRC_PSH}
 	git submodule update --init
 
 # Usefull for prestashop-deploy dev purpose : rebuild environment to test docker and environment 
 # env-rebuild: psh-clean-artefacts env-docker-clean docker-build-dev infra-init
-	
+
 # Complete docker environment purge
 # WARNING : This command will purge all docker environment (all projects) 
 env-docker-clean:
@@ -138,8 +140,10 @@ log-psh.app:
 	# ${DOCKER_COMPOSE} logs -f psh.app
 
 # TODO : manage all services
-log-psh.app-env:
-	${DOCKER_COMPOSE} exec psh.app printenv | sort
+log-psh.app-env: guard-DOCKER_COMPOSE guard-EXEC_PSH_CLI_PHP
+	@${DOCKER_COMPOSE} exec psh.app printenv | sort
+	@${EXEC_PSH_CLI_PHP} 'php bin/console debug:container --env-vars'
+	# @${EXEC_PSH_CLI_PHP} 'php bin/console fop:environment:get-parameters'
 
 log-proxy-env:
 	${DOCKER_COMPOSE} exec proxy.nginx printenv | sort
@@ -338,6 +342,7 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 		sudo rm -rf themes/classic/assets/cache; \
 		find app/Resources/translations -maxdepth 1 -mindepth 1 -type d ! -name 'default' -or -type f ! -name '.gitkeep' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find download 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find config/themes -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep'					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/c 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/genders   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'Unknown.jpg' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/l 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'none.jpg'  | xargs -I {} sh -c "sudo rm -rf {}"; \
@@ -349,6 +354,7 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 		find img/tmp 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find mails		   -maxdepth 1 -mindepth 1 -type d ! -name '_partials' ! -name 'themes' -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find modules 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find themes  	   -maxdepth 1 -mindepth 1 -type d -name 'hummingbird'								   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find translations  -maxdepth 1 -mindepth 1 -type d ! -name 'cldr' ! -name 'export' ! -name 'default' -or -type f ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find upload 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find var/cache	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
@@ -387,12 +393,9 @@ psh-dev-install-shop: guard-EXEC_PSH_CLI_PHP psh-admin-fix-rights
 psh-admin-fix-rights:
 	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 
-psh-dev-reset: psh-clean-artefacts
-	- docker stop $(shell docker ps -a -q)
-	- docker rm -v $(shell docker ps -a -q)
-	- docker volume rm $(shell docker volume ls -q -f dangling=true)
-	- docker network rm $(shell docker network ls -q --filter type=custom)
-	make infra-init
+psh-dev-reset: infra-reset infra-init psh-dev-install-shop infra-run
+
+psh-dev-reinstall: infra-stop psh-clean-artefacts psh-init psh-dev-install-shop infra-run
 
 psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_PHP} 'php ./vendor/bin/php-cs-fixer fix'
@@ -426,25 +429,59 @@ psh-test-stan: guard-EXEC_PSH_CLI_PHP
 # 	${EXEC_PSH_CLI_PHP} 'php bin/console cache:clear'
 
 # TODO : find a generic way to "npm run watch" a theme according dynamic choice. 
-psh-watch: guard-EXEC_PSH_CLI_NPM
+psh-dev-admin-dev-watch: guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
+	# ${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/default; npm run watch'
+
+psh-dev-hummingbird-watch: guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run watch'
+
+psh-dev-classic-watch: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd themes/classic/_dev; npm run watch'
-	# ${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
-	# ${EXEC_PSH_CLI_NPM} 'cd /admin-dev/themes/default; npm run watch'
 
 # psh-dev-front: guard-EXEC_PSH_CLI_NPM
 # 	${EXEC_PSH_CLI_NPM} 'make assets'
 
 psh-dev-check-for-commit: psh-apply-guidelines psh-test
 
+psh-dev-check-hummigbird-for-commit:
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run scss-fix'
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run lint-fix'
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run test'
+
 # Todo : configure commands to use `git@github.com:friends-of-presta/fop_` and git to replace `git@github.com:friends-of-presta/fop_` by `git@github.com:MeKeyCool/fop_`
 # Todo : create scripts with user friendly module install interface
-# UNDER WORK
-# psh-dev-install-fop-console: guard-EXEC_PSH_CLI_PHP guard-INFRA_SRC_PSH
-# 	-cd ${INFRA_SRC_PSH}/modules; rm -rf fop_console
-# 	-cd ${INFRA_SRC_PSH}/modules; git clone git@github.com:MeKeyCool/fop_console.git
-# 	${EXEC_PSH_CLI_PHP} 'cd modules/fop_console; composer install'
-# 	${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo install fop_console'
-# 	# ${EXEC_PSH_CLI_PHP} 'php bin/console fop:about:version'
+# UNDER WORK (use `feature/add_getenv_command` branch)
+psh-dev-install-fop-console: guard-EXEC_PSH_CLI_PHP guard-INFRA_SRC_PSH
+	-${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo uninstall fop_console'
+	-cd ${INFRA_SRC_PSH}/modules; rm -rf fop_console
+	-cd ${INFRA_SRC_PSH}/modules; git clone git@github.com:MeKeyCool/fop_console.git
+	${EXEC_PSH_CLI_PHP} 'cd modules/fop_console; composer install'
+	${EXEC_PSH_CLI_PHP} 'php bin/console pr:mo install fop_console'
+	${EXEC_PSH_CLI_PHP} 'php bin/console -vvv fop:about:version'
+	
+psh-dev-fop-console-apply-guidelines: guard-EXEC_PSH_CLI_PHP
+	${EXEC_PSH_CLI_PHP} 'cd modules/fop_console; php vendor/bin/php-cs-fixer --config=.php_cs-fixer.dist.php --path-mode=intersection --verbose fix src/Commands/Environment/EnvironmentGetParameters.php'
+
+
+# https://github.com/PrestaShop/hummingbird
+# Todo :
+# 	- enhance hummingbird / theme install documentation 
+# 	- Add some environment variable for http scheme (http/https) => problem with Prestashop management concurrency
+#  	- How to manage multishop ?
+psh-dev-install-hummingbird: guard-EXEC_PSH_CLI_NPM guard-INFRA_SRC_PSH
+	-cd ${INFRA_SRC_PSH}/themes; rm -rf hummingbird
+	-cd ${INFRA_SRC_PSH}/themes; git clone git@github.com:MeKeyCool/hummingbird.git
+	@echo "generating .env"
+	@cd ${INFRA_SRC_PSH}/themes/hummingbird/webpack; \
+		rm -f ./.env; \
+		echo "PORT=3505" >> .env; \
+		echo "SERVER_ADDRESS=$(shell echo "$(PROXY_BASE_HOSTNAME_LIST)" | head -n1 | cut -d "," -f1)" >> .env; \
+		echo "SITE_URL=https://$(shell echo "$(PROXY_BASE_HOSTNAME_LIST)" | head -n1 | cut -d "," -f1)" >> .env; \
+		echo "PUBLIC_PATH=/themes/hummingbird/assets/" >> .env;
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm i'
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run build'
+
 
 # Todo : fix headers
 # vendor/bin/header-stamp prestashop:licenses:update --license=/Users/mFerment/www/prestashop/blockreassurance/vendor/prestashop/header-stamp/assets/afl.txt
