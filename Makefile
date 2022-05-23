@@ -21,7 +21,7 @@ ifneq (,$(wildcard ${INFRA_ENV_BASE_PATH}/deploy.env))
     include ${INFRA_ENV_BASE_PATH}/deploy.env
     export
 endif
-export DOCKER_PSH_IMG=${DOCKER_REGISTRY_BASE_PATH}/${DOCKER_PSH_IMG_PATH}/${DOCKER_PSH_IMG_NAME}:${DOCKER_PSH_IMG_TAG}
+# export DOCKER_PSH_IMG=${DOCKER_REGISTRY_BASE_PATH}/${DOCKER_PSH_IMG_PATH}/${DOCKER_PSH_IMG_NAME}:${DOCKER_PSH_IMG_TAG}
 # export INFRA_DOCKER_PROXY=${DOCKER_REGISTRY_BASE_PATH}/dockerhub
 export INFRA_ENV_PATH = ${INFRA_ENV_BASE_PATH}/data/${DEPLOY_ENV}
 export INFRA_SRC_PSH = ${INFRA_SRC_BASE_PATH}/prestashop
@@ -75,11 +75,16 @@ infra-reset: clean-all env-docker-clean config-restore
 
 # we dissociate 'env' from 'infra' to avoid deployment "mistakes"; env is reserved for "risky" operations
 
-# First local install (WARNING : needs pre-configuration, cf. Readme)
-# env-init: 
-# 	make infra-init
+# This command :
+# 	- prepares "env files" and services configuration structures according template.
+#	- 
+env-init: guard-INFRA_ENV_PATH guard-INFRA_ENV_BASE_PATH guard-INFRA_SRC_PSH
+	mkdir -p ${INFRA_ENV_PATH}
+	cp -r ${INFRA_ENV_BASE_PATH}/template/* ${INFRA_ENV_PATH}
+	git submodule update --init
 
 # Usefull for prestashop-deploy dev purpose : reset environment to fresh configured project 
+# WARNING : remove all docker objects (even other projects one)
 env-reset: infra-reset psh-clean-infra-cache
 	rm -rf ${INFRA_SRC_PSH}
 	git submodule update --init
@@ -174,12 +179,6 @@ config-restore: guard-INFRA_ENV_BASE_PATH guard-DEPLOY_ENV
 	rm -rf ${INFRA_ENV_PATH}
 	mkdir ${INFRA_ENV_PATH}
 	- cp -r ${INFRA_ENV_BASE_PATH}/backup/${DEPLOY_ENV}/* ${INFRA_ENV_PATH}
-
-# This command builds "env files" and services configuration structures according template.
-# Todo : should check if ${INFRA_ENV_PATH} exists
-config-prepare-env:
-	mkdir -p ${INFRA_ENV_PATH}
-	cp -r ${INFRA_ENV_BASE_PATH}/template/* ${INFRA_ENV_PATH}
 
 # Remove environment variable names from services configuration files to apply their values
 # TODO : make envsubst quiet/silent
@@ -310,11 +309,12 @@ proxy-config:
 
 # TODO : deep clean of directory structure (cache and logs)
 # Please notice that composer `--prefer-install=source` option is made for local development (keep .git in dependencies)
-# Todo : make `--prefer-install=source` optional for development environment
+# Todo : make `--prefer-install=source` optional for "development" environments
 psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_PHP} 'mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
-	${EXEC_PSH_CLI_PHP} 'composer install --prefer-install=source' 
+	${EXEC_PSH_CLI_PHP} 'composer install' 
+	# ${EXEC_PSH_CLI_PHP} 'composer install --prefer-install=source' 
 	${EXEC_PSH_CLI_PHP} 'touch .htaccess'
 	${EXEC_PSH_CLI_NPM} 'make assets'
 	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'

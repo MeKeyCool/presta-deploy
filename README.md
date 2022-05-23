@@ -21,21 +21,17 @@ In order to use this project on your environment, you need
 
 ### Local install
 
-1. For first install, configure your local environment 
+1. For first install, pre-configure your environment 
     1. ``cp infra/env/deploy.env.template infra/env/deploy.env``
     2. Edit ``deploy.env`` values.
-    3. ``make config-prepare-env``
+    3. ``make env-init``
     4. Edit all required ``infra/env/data/${DEPLOY_ENV}/*.env`` values and customize what you want.
-    5. ``make services-config-all``
-    > :point_up: For more information, read [TODO : add proxy configuration documentation]()
-2. Deploy your local environment : ``make env-init``
-
+2. Then initialize your environment : ``infra-init``
 
 > :point_up: Connect to your install (take `PROXY_BASE_HOSTNAME` from `PROXY_BASE_HOSTNAME_LIST`): 
 > - **auto-setup** : https://{PROXY_BASE_HOSTNAME}/install-dev/index.php
 > - **front-office** : https://{PROXY_BASE_HOSTNAME}/index.php
 > - **back-office** : https://{PROXY_BASE_HOSTNAME}/admin-dev/index.php
-
 
 > :point_up: Take a look to `Makefile` commands. Usefull to understand Prestashop install/deployment.
 
@@ -65,67 +61,8 @@ If you want to use this project for Prestashop organization projects contributio
 * [Create a pull request](https://devdocs.prestashop.com/1.7/contribute/contribute-pull-requests/create-pull-request/)
 
 Once you are aware about Prestashop expectations, you may want to adapt your git configuration to push your local modifications to your own forks.
+Please take a look at [Development setup](doc/development_setup.md)
 
-For example, you may want to edit `~/.gitconfig` adding some lines :
-```
-[url "git@github.com:MyGithubAccount/"]
-  pushInsteadOf = https://github.com/PrestaShop/
-  pushInsteadOf = git@github.com:PrestaShop/
-```
-
-> cf. https://jonhnnyweslley.net/blog/how-to-rewrite-git-urls-to-clone-faster-and-push-safer/ for some simple explanations
-> 
-> :point_up: Please notice you'll need to fork the project you want to contribute before to push your local work.
-
-
-### Tools and usefull commands
-
-You may need to clean all your local Docker environment :
-```sh
-docker stop $(docker ps -a -q)
-docker rm -v $(docker ps -a -q)
-docker volume rm $(docker volume ls -q -f dangling=true)
-docker network rm $(docker network ls -q --filter type=custom)
-docker rmi $(docker images -a -q) -f
-docker builder prune -f
-docker system prune -a -f
-```
-
-If you want to rebase your current branch to Prestashop/develop :
-```sh
-git remote add ps git@github.com:PrestaShop/PrestaShop.git
-git fetch ps
-git rebase -i ps/develop
-git push -f origin develop
-```
-
-If you need to solve conflicts during a rebase :
-```sh
-Resolve all conflicts manually, mark them as resolved with
-"git add/rm <conflicted_files>", then run "git rebase --continue".
-You can instead skip this commit: run "git rebase --skip".
-To abort and get back to the state before "git rebase", run "git rebase --abort".
-```
-
-If you want to change an old commit :
-> ```sh
-> git rebase --interactive '{commit id}^'
-> ```
-> Please note the caret ^ at the end of the command, because you need actually to rebase back to the commit before the one you wish to modify.
-> In the default editor, modify `pick` to `edit` in the line mentioning '{commit id}'.
-> 
-> Save the file and exit.
->
-> At this point, '{commit id}' is your last commit (like if you just had created) and you can easily amend it.
->
-> To end, run `git rebase --continue`
-> 
-> :point_up: More information :
-> - [Rewriting-history](https://backlog.com/git-tutorial/rewriting-history/) 
-> - [How to modify a specified commit?](https://stackoverflow.com/questions/1186535/how-to-modify-a-specified-commit)
-
-
-> **TODO** git bisect
 
 
 ## Usefull documentation
@@ -212,6 +149,8 @@ If you want to change an old commit :
   * [x] Manage licensing
         https://choosealicense.com/appendix/
   * [ ] Review basic documentation on Prestashop-deploy project
+  * [ ] Consider adding prestashop devdoc to ./doc/prestashop (cf. https://github.com/PrestaShop/devdocs-site/blob/main/.gitmodules)
+  * [ ] Add proxy configuration documentation (`infra/env/data/${DEPLOY_ENV}/proxy.env` and `infra/env/data/${DEPLOY_ENV}/proxy/etc/nginx` specific behavior)
 * Proxy
   * [ ] Create timeout parameter to overwrite `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.proxy` (take a look to php.ini as well)
   * [x] Find a proper setup to configure `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.local` with ${PROXY_BASE_HOSTNAME} file name under ${INFRA_ENV_PATH}} directory and to replace environment variables.

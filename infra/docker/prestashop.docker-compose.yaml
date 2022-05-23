@@ -2,7 +2,6 @@ version: '3.8'
 
 # WARN : no merge for list with yaml extension fields => we can't add volumes
 x-php-service-build: &php-service-build
-  image: ${DOCKER_PSH_IMG}
   build:
     context: ${INFRA_DOCKER_PATH}/build/
     dockerfile: ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.7.4.dev
