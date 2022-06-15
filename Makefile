@@ -317,7 +317,7 @@ psh-init: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	# ${EXEC_PSH_CLI_PHP} 'composer install --prefer-install=source' 
 	${EXEC_PSH_CLI_PHP} 'touch .htaccess'
 	${EXEC_PSH_CLI_NPM} 'make assets'
-	${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
+	-${EXEC_PSH_CLI_PHP} 'chmod -R a+w admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 	# ./tools/assets/build.sh
 	# ${EXEC_PSH_CLI_PHP} 'php bin/console ...'
 
@@ -342,6 +342,7 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 		find download 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find config/themes -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep'					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/c 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
+		find img/e 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/genders   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'Unknown.jpg' | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/l 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'none.jpg'  | xargs -I {} sh -c "sudo rm -rf {}"; \
 		find img/m 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
@@ -392,33 +393,37 @@ psh-dev-install-shop: guard-EXEC_PSH_CLI_PHP psh-admin-fix-rights
 psh-admin-fix-rights:
 	${DOCKER_COMPOSE} run -u root:root psh.cli.php sh -c 'chmod -R 777 admin-dev/autoupgrade admin-dev/export admin-dev/import app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 
-psh-dev-reset: infra-reset infra-init psh-dev-install-shop infra-run
+psh-dev-reset: infra-reset infra-init infra-run psh-dev-install-shop
 
-psh-dev-reinstall: infra-stop psh-clean-artefacts psh-init psh-dev-install-shop infra-run
+# Todo : add `git stash` / `git reset --hard` / `git stash pop` => what about untracked files ?
+psh-dev-reinstall: infra-stop psh-clean-artefacts psh-init infra-run psh-dev-install-shop
 
 psh-apply-guidelines: guard-EXEC_PSH_CLI_PHP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_PHP} 'php ./vendor/bin/php-cs-fixer fix'
 	# ${EXEC_PSH_CLI_NPM} 'npm run scss-lint'
 	# ${EXEC_PSH_CLI_NPM} 'npm run scss-fix'
 
-psh-test: guard-EXEC_PSH_CLI_PHP
-	${EXEC_PSH_CLI_PHP} 'composer unit-test'
-	# ${EXEC_PSH_CLI_PHP} 'composer test-all'
-	# ${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Module/SourceHandler/ZipSourceHandlerTest.php'
-	# ${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Grid/Definition/Factory/CustomerAddressGridDefinitionFactoryTest.php'
+psh-test-all: psh-test-unit psh-test-integration psh-test-integration-behaviour psh-test-stan
 
-# psh-test-integration: guard-EXEC_PSH_CLI_PHP
+# NOTICE : If you want to list deprecation warnings, you may want to edit `SYMFONY_DEPRECATIONS_HELPER` value
+# see https://symfony.com/doc/current/components/phpunit_bridge.html#configuration
+psh-test-unit: guard-EXEC_PSH_CLI_PHP
+	${EXEC_PSH_CLI_PHP} 'SYMFONY_DEPRECATIONS_HELPER=weak composer unit-test'
+# 	${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml'
+# 	${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Module/ModuleRepositoryTest.php'
+# 	${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Module/SourceHandler/ZipSourceHandlerTest.php'
+# 	${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Grid/Definition/Factory/CustomerAddressGridDefinitionFactoryTest.php'
+
+psh-test-integration: guard-EXEC_PSH_CLI_PHP
+	${EXEC_PSH_CLI_PHP} 'composer integration-tests'
 # 	${EXEC_PSH_CLI_PHP} 'composer -vvv integration-tests'
 
-# psh-test-integration-behaviour: guard-EXEC_PSH_CLI_PHP
-# 	# cf. tests/Integration/Behaviour/Features/Scenario/Order/order_from_bo.feature
-# 	${EXEC_PSH_CLI_PHP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress --no-snippets --strict --tags order-from-bo'
-# 	# ${EXEC_PSH_CLI_PHP} 'composer run-script integration-behaviour-tests --timeout=0'
-# 	# ${EXEC_PSH_CLI_PHP} 'composer -v integration-behaviour-tests'
+psh-test-integration-behaviour: guard-EXEC_PSH_CLI_PHP
+	${EXEC_PSH_CLI_PHP} 'composer integration-behaviour-tests'	
 
 # https://phpstan.org/user-guide/command-line-usage
 psh-test-stan: guard-EXEC_PSH_CLI_PHP
-	${EXEC_PSH_CLI_PHP} 'php vendor/bin/phpstan analyse --memory-limit 1G -v -c phpstan.neon.dist'
+	${EXEC_PSH_CLI_PHP} 'php vendor/bin/phpstan analyse --memory-limit 2G -v -c phpstan.neon.dist'
 
 # TODO add psh-test-sanity
 # HEADLESS=false URL_FO=https://prestashop.php73.local/ DB_NAME=prestashop DB_PASSWD=root npm run sanity-travis
@@ -441,7 +446,7 @@ psh-dev-classic-watch: guard-EXEC_PSH_CLI_NPM
 # psh-dev-front: guard-EXEC_PSH_CLI_NPM
 # 	${EXEC_PSH_CLI_NPM} 'make assets'
 
-psh-dev-check-for-commit: psh-apply-guidelines psh-test
+psh-dev-check-for-commit: psh-apply-guidelines psh-test psh-test-stan
 
 psh-dev-check-hummigbird-for-commit:
 	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run scss-fix'

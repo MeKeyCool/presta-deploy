@@ -24,10 +24,10 @@ services:
     restart: always
     volumes:
       - psh_db_data:/var/lib/mysql
-      # - psh_db_init:/docker-entrypoint-initdb.d
+      - psh_db_init:/docker-entrypoint-initdb.d
     environment:
       MYSQL_ROOT_PASSWORD: admin
-      MYSQL_DATABASE: prestashop
+      # MYSQL_DATABASE: prestashop, test_prestashop 
       MYSQL_USER: prestashop_admin
       MYSQL_PASSWORD: prestashop_admin
     healthcheck:
@@ -40,8 +40,8 @@ services:
 
   psh.cli.npm:
     # image: node:17.6-bullseye
-    # image: node:14.19-buster
-    image: node:16.15-buster
+    image: node:14.19-buster
+    # image: node:16.15-buster
     container_name: psh.cli.npm
     hostname: psh.cli.npm
     user: ${CURRENT_UID}
@@ -108,12 +108,12 @@ services:
 volumes:
   psh_db_data:
     driver: local
-  # psh_db_init:
-  #   driver: local
-  #   driver_opts:
-  #     o: bind
-  #     type: none
-  #     device: ${INFRA_ENV_PATH}/prestashop/docker-entrypoint-initdb.d
+  psh_db_init:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${INFRA_ENV_PATH}/prestashop/docker-entrypoint-initdb.d
 
 networks:
   psh_backend:

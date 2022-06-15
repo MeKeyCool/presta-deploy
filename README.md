@@ -115,9 +115,13 @@ Please take a look at [Development setup](doc/development_setup.md)
   * [x] Add a complete cli install command
     * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
   * [ ] Add a warning to env commands (Y/n option)
+  * [ ] Add a warning before modifying sources (check git status + Apply/Cancel/Stash option)
+  * [ ] Add php version, node version and mysql version to project variables (deploy.env)
 * Optimisation and project architecture
   * [ ] Check `psh-clean-cache` command (it looks it breaks something, does it ?)
-  * [ ] Make `composer test-all` command works (can't create database -> use MySQL root user ?)
+  * [ ] Solve container multiplication when using `EXEC_PSH_CLI_PHP`
+  * [x] Make `test-all` command works
+  * [x] Check why `composer unit-test` returns an error
   * [ ] Script / command refactoring & enhancement
     * Take a look at https://github.com/jolelievre/ps-install-tools
     * Take a look at src/prestashop/.github for CI actions / commands
