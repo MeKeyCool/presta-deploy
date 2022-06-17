@@ -1,10 +1,21 @@
-FROM php:7.2-apache-buster
+FROM php:7.4-apache-bullseye
+# FROM 8.1-apache-bullseye
 LABEL maintainer="MeKeyCool <pierre-yves.christmann@prestashop.com>"
 
-# Inspired from https://github.com/PrestaShop/docker/tree/master/base/images/7.2-apache
+# Inspired from 
+# - https://github.com/PrestaShop/docker/tree/master/base/images/7.4-apache
+# - https://github.com/SD1982/dockerQA/blob/master/php/dockerfiles/php-7.4.Dockerfile
 
 ARG working_dir
 WORKDIR ${working_dir}
+
+# To run files with the same group as your host user
+ARG HOST_UID
+ARG HOST_GID
+
+RUN groupmod -g $HOST_GID www-data \
+  && usermod -u $HOST_UID -g $HOST_GID www-data
+
 
 # ENV PS_DOMAIN="<to be defined>" \
 # DB_SERVER="<to be defined>" \
@@ -29,15 +40,27 @@ WORKDIR ${working_dir}
 # PS_FOLDER_ADMIN=admin \
 # PS_FOLDER_INSTALL=install
 
-RUN a2enmod rewrite
-# RUN set -eux ; \
-RUN \
+RUN a2enmod rewrite; \
+    a2enmod ssl
+
+# WARN : allowing this "default-ssl" requires a valid '/etc/ssl/certs/ssl-cert-snakeoil.pem' certificats
+#        Without this certificats, the container risks to not work properly (take a look to logs)
+# Workaround to share specific certs files accross proxy / letsencrypt and prestashop image
+RUN set -eux; \
+    sed -i 's+/etc/ssl/certs/ssl-cert-snakeoil.pem+/etc/nginx/certs/default.crt+g' /etc/apache2/sites-available/default-ssl.conf; \
+    sed -i 's+/etc/ssl/private/ssl-cert-snakeoil.key+/etc/nginx/certs/default.key+g' /etc/apache2/sites-available/default-ssl.conf; \
+    a2ensite default-ssl;
+
+# TODO
+# EXPOSE 80
+# EXPOSE 443
+
+RUN set -eux ; \
     apt-get update && apt-get install -y \
         libmcrypt-dev \
 		libjpeg62-turbo-dev \
 		libpcre3-dev \
 		libpng-dev \
-        libwebp-dev \
 		libfreetype6-dev \
 		libxml2-dev \
 		libicu-dev \
@@ -46,7 +69,7 @@ RUN \
 		wget \
         unzip \
         libonig-dev; \
-    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include; \
+    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/; \
     docker-php-ext-install iconv intl pdo_mysql mbstring soap gd zip; \
     docker-php-source extract \
     && if [ -d "/usr/src/php/ext/mysql" ]; then docker-php-ext-install mysql; fi \
@@ -102,14 +125,18 @@ RUN set -eux ; \
         ; \
     composer --ansi --version --no-interaction ; \
     composer diagnose ; \
-    rm -fr /tmp/installer.php /tmp/cache ;
+    rm -fr /tmp/installer.php /tmp/cache ; \
+    # Xdebug
+    pecl install xdebug-3.1.4 ;
 
+# ADD custom-entrypoint.sh /
 
 # Keep this documetation if custom entry-point needed.
 # Usefull documentation : https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#using-entrypoint-for-pre-run-configuration
-# ENTRYPOINT ["/docker-entrypoint.sh", "docker-php-entrypoint"]
+# ENTRYPOINT ["/custom-entrypoint.sh", "docker-php-entrypoint"]
 # Please notice that overriding ENTRYPOINT overrides default CMD as well
-# You may need to check original Dockerfile to know what CMD you should use.
+# You may need to check [original Dockerfile](https://github.com/docker-library/php/blob/master/7.4/bullseye/apache/Dockerfile)
+# to know what CMD you should use.
 # CMD ["apache2-foreground"]
 
 

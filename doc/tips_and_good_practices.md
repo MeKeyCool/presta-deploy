@@ -44,7 +44,7 @@ You can instead skip this commit: run "git rebase --skip".
 To abort and get back to the state before "git rebase", run "git rebase --abort".
 ```
 
-Use case : you want to change an old commit.
+Use case : you want to change an old commit OR you want to add a commit in history after a commit.
 * ```sh
     git rebase --interactive '{commit id}^'
     ```
@@ -52,6 +52,9 @@ Use case : you want to change an old commit.
 * In the default editor, modify `pick` to `edit` in the line mentioning '{commit id}'.
 * Save the file and exit.
     > :point_up: At this point, '{commit id}' is your last commit (like if you just had created) and you can easily amend it.
+* Make your changes :
+  * If you want to change previous commit, use `git commit --amend`
+  * If you want to add a new commit at this history point, use classical `git commit`
 * To end, run `git rebase --continue`
 
 > :point_up: More information :

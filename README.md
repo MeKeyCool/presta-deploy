@@ -119,7 +119,6 @@ Please take a look at [Development setup](doc/development_setup.md)
   * [ ] Add php version, node version and mysql version to project variables (deploy.env)
 * Optimisation and project architecture
   * [ ] Check `psh-clean-cache` command (it looks it breaks something, does it ?)
-  * [ ] Solve container multiplication when using `EXEC_PSH_CLI_PHP`
   * [x] Make `test-all` command works
   * [x] Check why `composer unit-test` returns an error
   * [ ] Script / command refactoring & enhancement
@@ -144,7 +143,9 @@ Please take a look at [Development setup](doc/development_setup.md)
       * Take a look at some tools
         * https://github.com/nenes25/prestashop_console
         * https://github.com/friends-of-presta/fop_console
-  * [ ] Remove `sudo` usage from Makefile => enhance docker volume usage => review Prestashop directories usage.
+  * [x] Remove `sudo` usage from Makefile => enhance docker volume usage => review Prestashop directories usage.
+  * [ ] Study BindFS configuration for right management.
+        https://www.fullstaq.com/knowledge-hub/blogs/docker-and-the-host-filesystem-owner-matching-problem
 * Prestashop sources
   * [ ] Clean Prestashop src to ensure dedicated directories for install
     * [ ] Remove those directories from root source repository :
@@ -152,7 +153,7 @@ Please take a look at [Development setup](doc/development_setup.md)
 * Documentation and assets
   * [x] Manage licensing
         https://choosealicense.com/appendix/
-  * [ ] Review basic documentation on Prestashop-deploy project
+  * [x] Review basic documentation on Prestashop-deploy project
   * [ ] Consider adding prestashop devdoc to ./doc/prestashop (cf. https://github.com/PrestaShop/devdocs-site/blob/main/.gitmodules)
   * [ ] Add proxy configuration documentation (`infra/env/data/${DEPLOY_ENV}/proxy.env` and `infra/env/data/${DEPLOY_ENV}/proxy/etc/nginx` specific behavior)
 * Proxy

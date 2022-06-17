@@ -1,21 +1,7 @@
 version: '3.8'
 
-# WARN : no merge for list with yaml extension fields => we can't add volumes
-x-php-service-build: &php-service-build
-  build:
-    context: ${INFRA_DOCKER_PATH}/build/
-    dockerfile: ${INFRA_DOCKER_PATH}/build/Dockerfile.prestashop.7.4.dev
-    args:
-      - working_dir=/var/www/html
-  depends_on:
-    psh.db:
-      condition: service_healthy
-  extra_hosts:
-    - "host.docker.internal:host-gateway" # necessary for xdebug reverse networking
-
 
 services:
-
   # TODO : review with install / restore / test db / ...
   psh.db:
     image: mysql:5.7-debian
@@ -27,7 +13,6 @@ services:
       - psh_db_init:/docker-entrypoint-initdb.d
     environment:
       MYSQL_ROOT_PASSWORD: admin
-      # MYSQL_DATABASE: prestashop, test_prestashop 
       MYSQL_USER: prestashop_admin
       MYSQL_PASSWORD: prestashop_admin
     healthcheck:
@@ -41,14 +26,14 @@ services:
   psh.cli.npm:
     # image: node:17.6-bullseye
     image: node:14.19-buster
-    # image: node:16.15-buster
+    # image: node:16.15-buster => Todo : force npm version to 7 ?
     container_name: psh.cli.npm
     hostname: psh.cli.npm
-    user: ${CURRENT_UID}
+    user: ${HOST_ID}
     working_dir: /home/node/prestashop
     volumes:
       - ${INFRA_SRC_PSH}:/home/node/prestashop:rw
-      - ${INFRA_DOCKER_PATH}/prestashop/cache/npm:/.npm:rw
+      - ${INFRA_CACHE_PATH}/npm:/.npm:rw
     networks:
       - psh_backend
     # This command should fix `Internal watch failed: ENOSPC: System limit for number of file watchers reached, watch ...` problem
@@ -56,41 +41,37 @@ services:
       sh -c "echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf && 
         sysctl -p"
 
-  psh.cli.php:
-    <<: *php-service-build
-    container_name: psh.cli.php
-    hostname: psh.cli.php
-    user: ${CURRENT_UID}
-    command: service apache2 stop # stop useless apache while images not dissociated
-    volumes:
-      - ${INFRA_SRC_PSH}:/var/www/html:rw
-      - ${INFRA_DOCKER_PATH}/prestashop/cache/composer:/tmp/composer:rw
-      - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini:ro
-      - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
-      - ${INFRA_ENV_PATH}/xdebug/psh.cli.php:/var/logs/xdebug:rw
-    environment:
-      - COMPOSER_HOME=/tmp/composer
-      # - COMPOSER_HOME=${INFRA_COMPOSER_HOME:-$HOME/.config/composer}
-      # - COMPOSER_CACHE_DIR=${INFRA_COMPOSER_CACHE_DIR:-$HOME/.cache/composer}
-    networks:
-      - psh_backend
-
   psh.app:
-    <<: *php-service-build
+    build:
+      context: ${INFRA_DOCKER_PATH}/src/
+      dockerfile: ${INFRA_DOCKER_PATH}/src/Dockerfile.prestashop.7.4.dev
+      args:
+        - working_dir=/var/www/html
+        - HOST_UID=${HOST_UID}
+        - HOST_GID=${HOST_GID}
+    depends_on:
+      proxy.letsencrypt:
+        condition: service_started
+      psh.db:
+        condition: service_healthy
     container_name: psh.app
     hostname: psh.app
-    restart: always
-    user: www-data:www-data
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # necessary for xdebug reverse networking
+    expose:
+      - 80
+      - 443
+    # restart: always
     environment:
       # Proxy integration
       # VIRTUAL_HOST: ${PROXY_BASE_HOSTNAME}
       # HTTPS_METHOD: noredirect
       LETSENCRYPT_HOST: ${PROXY_BASE_HOSTNAME_LIST}
-    expose:
-      - 80
-      - 443
+      COMPOSER_HOME: /tmp/composer
+      # - COMPOSER_HOME=${INFRA_COMPOSER_HOME:-$HOME/.config/composer}
+      # - COMPOSER_CACHE_DIR=${INFRA_COMPOSER_CACHE_DIR:-$HOME/.cache/composer}
     volumes:
-      - ${INFRA_DOCKER_PATH}/prestashop/cache/composer:/tmp/composer:rw
+      - ${INFRA_CACHE_PATH}/composer:/tmp/composer:rw
       - ${INFRA_SRC_PSH}:/var/www/html:delegated
       # TODO : review this volume usage once Prestashop ssl management properly configured.
       # cf. Dockerfile for consistency.
@@ -98,9 +79,6 @@ services:
       - ${INFRA_ENV_PATH}/prestashop/php.ini:/usr/local/etc/php/conf.d/php-presta.ini:ro
       - ${INFRA_ENV_PATH}/prestashop/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
       - ${INFRA_ENV_PATH}/xdebug/psh.app:/var/logs/xdebug:rw
-    depends_on:
-      proxy.letsencrypt:
-        condition: service_started
     networks:
       - psh_backend
       - endpoints
