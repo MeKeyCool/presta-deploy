@@ -31,20 +31,21 @@ export INFRA_SRC_PSH = ${INFRA_SRC_BASE_PATH}/prestashop
 
 # Include services *.env files
 
-ifneq (,$(wildcard ${INFRA_ENV_PATH}/networks.env))
-    include ${INFRA_ENV_PATH}/networks.env
-    export
-endif
+# ifneq (,$(wildcard ${INFRA_ENV_PATH}/networks.env))
+#     include ${INFRA_ENV_PATH}/networks.env
+#     export
+# endif
 
 ifneq (,$(wildcard ${INFRA_ENV_PATH}/proxy.env))
     include ${INFRA_ENV_PATH}/proxy.env
     export
 endif
 
-ifneq (,$(wildcard ${INFRA_ENV_PATH}/presta.env))
-    include ${INFRA_ENV_PATH}/presta.env
-    export
-endif
+# TODO : use environment variables for Prestashop
+# ifneq (,$(wildcard ${INFRA_ENV_PATH}/presta.env))
+#     include ${INFRA_ENV_PATH}/presta.env
+#     export
+# endif
 
 # Docker environment setup
 export DOCKER_NETWORK = $(PROJECT_NAME)/network
@@ -71,9 +72,7 @@ infra-watch: infra-run logs
 
 # stop containers and processes
 infra-stop: guard-DOCKER_COMPOSE 
-	${DOCKER_COMPOSE} stop
-
-infra-reset: clean-all env-docker-clean config-restore
+	${DOCKER_COMPOSE} stop 
 
 # we dissociate 'env' from 'infra' to avoid deployment "mistakes".
 # env is reserved for "risky" operations
@@ -88,7 +87,7 @@ env-init: guard-INFRA_ENV_PATH guard-INFRA_ENV_BASE_PATH guard-INFRA_SRC_PSH
 
 # Usefull for prestashop-deploy dev purpose : reset environment to fresh configured project 
 # WARNING : remove all docker objects (even other projects one)
-env-reset: infra-reset psh-clean-infra-cache
+env-reset: clean-all env-docker-clean config-restore psh-clean-infra-cache
 	rm -rf ${INFRA_SRC_PSH}
 	git submodule update --init
 
@@ -96,7 +95,10 @@ env-reset: infra-reset psh-clean-infra-cache
 # env-rebuild: psh-clean-artefacts env-docker-clean docker-build-dev infra-init
 
 # Complete docker environment purge
-# WARNING : This command will purge all docker environment (all projects) 
+# WARNING : This command will purge all docker environment (all projects)
+# TODO : Look for a "softer" reset solution 
+# 	https://github.com/docker/compose/issues/6159#issuecomment-862999377
+#	https://docs.docker.com/engine/reference/commandline/compose/#use--p-to-specify-a-project-name
 env-docker-clean:
 	- docker stop $(shell docker ps -a -q)
 	- docker rm -v $(shell docker ps -a -q)
@@ -290,9 +292,9 @@ proxy-config:
 
 ## Prestashop service admin
 ############################
-# TODO : underwork, looking for proper generic commands (iterative dev) 
 
 # TODO : deep clean of directory structure (cache and logs)
+
 # Please notice that composer `--prefer-install=source` option is made for local development (keep .git in dependencies)
 # Todo : make `--prefer-install=source` optional for "development" environments
 psh-init: guard-EXEC_PSH_APP guard-EXEC_PSH_CLI_NPM
@@ -348,11 +350,10 @@ psh-clean-infra-cache: guard-INFRA_DOCKER_PATH
 	find ${INFRA_CACHE_PATH}/composer -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitignore' | xargs -I {} sh -c "rm -rf {}"
 
 
-# TODO : under tests commands
-##############################
+# Specific Prestashop development and test commands
+####################################################
 
 # TODO : add environment variables to customize and ensure consistency (name / email / password).
-# TODO : fix access rights
 # TODO : check --db_create=1` usage
 # Please notice shop is installed from first hostname off $PROXY_BASE_HOSTNAME_LIST
 psh-dev-install-shop: guard-EXEC_PSH_APP
@@ -373,19 +374,16 @@ psh-dev-install-shop: guard-EXEC_PSH_APP
 # 	 ${EXEC_PSH_APP} 'chmod -R 777 admin-dev/autoupgrade admin-dev/export admin-dev/import app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 #	 ${EXEC_PSH_APP} 'mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 
+psh-dev-env-reset: env-reset infra-init infra-run psh-dev-install-shop
 
-psh-dev-reset: infra-reset infra-init infra-run psh-dev-install-shop
-
-# Todo : add `git stash` / `git reset --hard` / `git stash pop` => what about untracked files ?
 psh-dev-reinstall: psh-init psh-dev-install-shop
-# psh-dev-reinstall: infra-stop psh-clean-artefacts psh-init infra-run psh-dev-install-shop
 
 psh-apply-guidelines: guard-EXEC_PSH_APP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_APP} 'php ./vendor/bin/php-cs-fixer fix'
-	${EXEC_PSH_APP} 'cd ./admin-dev/themes/new-theme && npm run lint-fix && npm run scss-fix'
+	${EXEC_PSH_CLI_NPM} 'cd ./admin-dev/themes/new-theme && npm run lint-fix && npm run scss-fix'
 # 	${EXEC_PSH_CLI_NPM} 'cd ./admin-dev/themes/new-theme && npm install'
 
-psh-test-all: psh-test-unit psh-test-integration psh-test-integration-behaviour psh-test-stan
+psh-test-all: psh-test-unit psh-test-integration psh-test-behaviour psh-test-stan
 
 # NOTICE : If you want to list deprecation warnings, you may want to edit `SYMFONY_DEPRECATIONS_HELPER` value
 # see https://symfony.com/doc/current/components/phpunit_bridge.html#configuration
@@ -400,7 +398,7 @@ psh-test-integration: guard-EXEC_PSH_APP
 #	${EXEC_PSH_APP} 'php -d date.timezone=UTC -d memory_limit=-1 ./vendor/phpunit/phpunit/phpunit -c tests/Integration/phpunit.xml tests/Integration/PrestaShopBundle/Controller/Sell/Customer/Address/AddressControllerTest.php'
 # 	${EXEC_PSH_APP} 'composer -vvv integration-tests'
 
-psh-test-integration-behaviour: guard-EXEC_PSH_APP
+psh-test-behaviour: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
 
 # https://phpstan.org/user-guide/command-line-usage
@@ -414,30 +412,24 @@ psh-test-stan: guard-EXEC_PSH_APP
 # psh-clean-cache: guard-EXEC_PSH_APP
 # 	${EXEC_PSH_APP} 'php bin/console cache:clear'
 
-# TODO : find a generic way to "npm run watch" a theme according dynamic choice. 
-psh-dev-admin-dev-watch: guard-EXEC_PSH_CLI_NPM
+psh-dev-watch-admin-dev: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
 	# ${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/default; npm run watch'
 
-psh-dev-hummingbird-watch: guard-EXEC_PSH_CLI_NPM
-	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run watch'
-
-psh-dev-classic-watch: guard-EXEC_PSH_CLI_NPM
+psh-dev-watch-classic: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd themes/classic/_dev; npm run watch'
 
-# psh-dev-front: guard-EXEC_PSH_CLI_NPM
-# 	${EXEC_PSH_CLI_NPM} 'make assets'
+psh-dev-build-front: guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_CLI_NPM} 'make assets'
 
-psh-dev-check-for-commit: psh-apply-guidelines psh-test psh-test-stan
+psh-dev-check-commit: psh-test-unit psh-test-integration psh-dev-check-style
 
-psh-dev-check-hummigbird-for-commit:
-	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run scss-fix'
-	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run lint-fix'
-	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run test'
+psh-dev-check-style: psh-apply-guidelines psh-test-stan
 
-# Todo : configure commands to use `git@github.com:friends-of-presta/fop_` and git to replace `git@github.com:friends-of-presta/fop_` by `git@github.com:MeKeyCool/fop_`
-# Todo : create scripts with user friendly module install interface
-# UNDER WORK (use `feature/add_getenv_command` branch)
+# Todo : fix headers
+# vendor/bin/header-stamp prestashop:licenses:update --license=/Users/mFerment/www/prestashop/blockreassurance/vendor/prestashop/header-stamp/assets/afl.txt
+
+# Todo : create scripts with dev friendly module install interface
 psh-dev-install-fop-console: guard-EXEC_PSH_APP guard-INFRA_SRC_PSH
 	-${EXEC_PSH_APP} 'php bin/console pr:mo uninstall fop_console'
 	-cd ${INFRA_SRC_PSH}/modules; rm -rf fop_console
@@ -468,6 +460,14 @@ psh-dev-install-hummingbird: guard-EXEC_PSH_CLI_NPM guard-INFRA_SRC_PSH
 	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm i'
 	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run build'
 
+# TODO : find a generic way to "npm run watch" a theme according dynamic choice.
+#  		 https://stackoverflow.com/questions/68441570/makefile-targets-autocomplete-when-using-wild-card-targets
+psh-dev-watch-hummingbird: guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run watch'
 
-# Todo : fix headers
-# vendor/bin/header-stamp prestashop:licenses:update --license=/Users/mFerment/www/prestashop/blockreassurance/vendor/prestashop/header-stamp/assets/afl.txt
+psh-dev-check-for-commit-hummigbird:
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run scss-fix'
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run lint-fix'
+	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run test'
+
+
