@@ -25,8 +25,8 @@ services:
 
   psh.cli.npm:
     # image: node:17.6-bullseye
-    # image: node:14.19-buster
-    image: node:16.15-buster # TOCHECK : force npm version to 7 ?
+    image: node:14.19-buster
+    # image: node:16.15-buster # TOCHECK : force npm version to 7 ?
     container_name: psh.cli.npm
     hostname: psh.cli.npm
     user: ${HOST_ID}

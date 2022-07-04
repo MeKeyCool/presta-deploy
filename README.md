@@ -128,9 +128,14 @@ Please take a look at [Development setup](doc/development_setup.md)
   * [ ] Script / command refactoring & enhancement
     * Take a look at https://github.com/jolelievre/ps-install-tools
     * Take a look at src/prestashop/.github for CI actions / commands
+  * [ ] Add SMTP management
+    * Some example here : https://github.com/jolelievre/ps-install-tools/blob/master/tools/tools.sh#L94-L105
+    * [MailDEv](https://maildev.github.io/maildev/)
+      https://github.com/maildev/maildev
   * [ ] Add some cache for phpstan and php_cs dev usage (specific reset for "env cache" and not reset during psh-dev-reset)
   * [x] Add composer cache persistent volume
   * [/] Add node/npm cache persistent volume (It looks the used volume isn't enough)
+    * [ ] We may enhance "reinstall" process using this trick : https://github.com/jolelievre/ps-install-tools/blob/master/tools/tools.sh#L120-L150
   * [x] Add proxy for custom hostname
   * [ ] Docker images build
     * [/] Take a look at multi-stage builds. Use docker-compose `build` section with `context`, `target`, `args`

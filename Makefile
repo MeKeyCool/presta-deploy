@@ -74,6 +74,8 @@ infra-watch: infra-run logs
 infra-stop: guard-DOCKER_COMPOSE 
 	${DOCKER_COMPOSE} stop 
 
+infra-restart: infra-stop infra-run
+
 # we dissociate 'env' from 'infra' to avoid deployment "mistakes".
 # env is reserved for "risky" operations
 
@@ -301,47 +303,44 @@ psh-init: guard-EXEC_PSH_APP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_APP} 'composer install' 
 	${EXEC_PSH_APP} 'touch .htaccess'
 	${EXEC_PSH_CLI_NPM} 'make assets'
-#	 ${EXEC_PSH_APP} 'composer install --prefer-install=source' 
 #	 ${EXEC_PSH_APP} 'php bin/console ...'
 
 
 # TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
-# TODO : find a way to remove sudos
 # TODO : problem to fix with img
 # TODO : add admin-dev/export admin-dev/import directories
-# TO REVIEW : should ${INFRA_DOCKER_PATH}/prestashop/cache/* be considered as service directories ? => clean only with env-* commands ?
 # psh-clean-artefacts: guard-INFRA_SRC_PSH
 # 	@echo "=== Remove install/dev artefacts"
 # 	rm -rf ${INFRA_SRC_PSH}/themes/node_modules ${INFRA_SRC_PSH}/themes/core.js ${INFRA_SRC_PSH}/themes/core.js.map ${INFRA_SRC_PSH}/themes/core.js.LICENSE.txt
 # 	cd ${INFRA_SRC_PSH}; \
-# 		sudo rm -rf app/logs log; mkdir -p app/logs log; \
+# 		rm -rf app/logs log; mkdir -p app/logs log; \
 # 		rm .htaccess; \
 # 		rm var/bootstrap.php.cache; \
-# 		sudo rm app/config/parameters.php app/config/parameters.yml; \
-# 		sudo rm -rf config/settings.inc.php config/themes/classic; \
-# 		sudo rm -rf themes/classic/assets/cache; \
-# 		find app/Resources/translations -maxdepth 1 -mindepth 1 -type d ! -name 'default' -or -type f ! -name '.gitkeep' | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find download 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find config/themes -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep'					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/c 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/e 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/genders   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'Unknown.jpg' | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/l 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'none.jpg'  | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/m 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/p 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/os 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/st 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/su 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find img/tmp 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find mails		   -maxdepth 1 -mindepth 1 -type d ! -name '_partials' ! -name 'themes' -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find modules 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find themes  	   -maxdepth 1 -mindepth 1 -type d -name 'hummingbird'								   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find translations  -maxdepth 1 -mindepth 1 -type d ! -name 'cldr' ! -name 'export' ! -name 'default' -or -type f ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find upload 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find var/cache	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find var/logs 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find var/sessions  -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "sudo rm -rf {}"; \
-# 		find vendor 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess'					   | xargs -I {} sh -c "sudo rm -rf {}"
+# 		rm app/config/parameters.php app/config/parameters.yml; \
+# 		rm -rf config/settings.inc.php config/themes/classic; \
+# 		rm -rf themes/classic/assets/cache; \
+# 		find app/Resources/translations -maxdepth 1 -mindepth 1 -type d ! -name 'default' -or -type f ! -name '.gitkeep' | xargs -I {} sh -c "rm -rf {}"; \
+# 		find download 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+# 		find config/themes -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep'					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/c 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/e 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/genders   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'Unknown.jpg' | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/l 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'none.jpg'  | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/m 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/p 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/os 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/st 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/su 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find img/tmp 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find mails		   -maxdepth 1 -mindepth 1 -type d ! -name '_partials' ! -name 'themes' -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+# 		find modules 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+# 		find themes  	   -maxdepth 1 -mindepth 1 -type d -name 'hummingbird'								   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find translations  -maxdepth 1 -mindepth 1 -type d ! -name 'cldr' ! -name 'export' ! -name 'default' -or -type f ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+# 		find upload 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+# 		find var/cache	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find var/logs 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find var/sessions  -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
+# 		find vendor 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess'					   | xargs -I {} sh -c "rm -rf {}"
 
 # TODO : shouldn't we move this cache to env/data ?
 psh-clean-infra-cache: guard-INFRA_DOCKER_PATH
@@ -376,12 +375,17 @@ psh-dev-install-shop: guard-EXEC_PSH_APP
 
 psh-dev-env-reset: env-reset infra-init infra-run psh-dev-install-shop
 
-psh-dev-reinstall: psh-init psh-dev-install-shop
+# TODO : remove modules, cache, artefacts, ... ?
+psh-dev-reinstall: 
+	${EXEC_PSH_APP} 'composer install'
+	make psh-dev-install-shop
 
-psh-apply-guidelines: guard-EXEC_PSH_APP guard-EXEC_PSH_CLI_NPM
-	${EXEC_PSH_APP} 'php ./vendor/bin/php-cs-fixer fix'
-	${EXEC_PSH_CLI_NPM} 'cd ./admin-dev/themes/new-theme && npm run lint-fix && npm run scss-fix'
-# 	${EXEC_PSH_CLI_NPM} 'cd ./admin-dev/themes/new-theme && npm install'
+psh-dev-reinstall-with-assets: psh-init psh-dev-install-shop
+
+# TODO : Should we run 'composer reinstall --prefer-install=source "prestashop/*"' instead ?
+psh-dev-reinstall-with-sources: guard-EXEC_PSH_APP
+	${EXEC_PSH_APP} 'composer reinstall --prefer-install=source "prestashop/*"'
+	make psh-dev-install-shop
 
 psh-test-all: psh-test-unit psh-test-integration psh-test-behaviour psh-test-stan
 
@@ -422,9 +426,15 @@ psh-dev-watch-classic: guard-EXEC_PSH_CLI_NPM
 psh-dev-build-front: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'make assets'
 
+
+psh-dev-apply-guidelines: guard-EXEC_PSH_APP guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_APP} 'php ./vendor/bin/php-cs-fixer fix'
+	${EXEC_PSH_CLI_NPM} 'cd ./admin-dev/themes/new-theme && npm run lint-fix && npm run scss-fix'
+# 	${EXEC_PSH_CLI_NPM} 'cd ./admin-dev/themes/new-theme && npm install'
+
 psh-dev-check-commit: psh-test-unit psh-test-integration psh-dev-check-style
 
-psh-dev-check-style: psh-apply-guidelines psh-test-stan
+psh-dev-check-style: psh-dev-apply-guidelines psh-test-stan
 
 # Todo : fix headers
 # vendor/bin/header-stamp prestashop:licenses:update --license=/Users/mFerment/www/prestashop/blockreassurance/vendor/prestashop/header-stamp/assets/afl.txt
@@ -465,9 +475,10 @@ psh-dev-install-hummingbird: guard-EXEC_PSH_CLI_NPM guard-INFRA_SRC_PSH
 psh-dev-watch-hummingbird: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run watch'
 
-psh-dev-check-for-commit-hummigbird:
+psh-dev-check-commit-hummigbird:
 	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run scss-fix'
 	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run lint-fix'
 	${EXEC_PSH_CLI_NPM} 'cd themes/hummingbird; npm run test'
 
-
+psh-dev-check-commit-classic:
+	${EXEC_PSH_CLI_NPM} 'cd themes/classic/_dev; npm run lint-fix; npm run scss-fix'
