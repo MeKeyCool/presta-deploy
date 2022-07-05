@@ -147,6 +147,10 @@ log-proxy-env: guard-DOCKER_COMPOSE
 	${DOCKER_COMPOSE} exec proxy.nginx printenv | sort
 	${DOCKER_COMPOSE} exec proxy.letsencrypt printenv | sort
 
+log-smtp: guard-DOCKER_COMPOSE guard-EXEC_PSH_DB
+	${DOCKER_COMPOSE} exec smtp.maildev printenv | sort
+	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "SELECT * FROM ps_configuration WHERE \`name\` LIKE \"PS_MAIL%\"";'
+
 log-system:
 	printenv
 	docker info
@@ -221,6 +225,9 @@ shell-proxy: guard-DOCKER_COMPOSE
 
 shell-proxy.letsencrypt: guard-DOCKER_COMPOSE
 	${DOCKER_COMPOSE} exec -u root:root proxy.letsencrypt sh -c '/bin/sh'
+
+shell-smtp.maildev: guard-DOCKER_COMPOSE
+	${DOCKER_COMPOSE} exec -u root:root smtp.maildev sh -c '/bin/sh'
 
 
 ## Tests
@@ -365,9 +372,16 @@ psh-dev-install-shop: guard-EXEC_PSH_APP
 		--db_password=prestashop_admin \
 		--db_name=prestashop \
 		--name=MeKeyShop \
-		--email=mekeycool@prestashop.com \
+		--email=me@ps.fr \
 		--password=adminadmin \
 		--db_create=1'
+
+psh-dev-configure-smtp: guard-EXEC_PSH_DB
+	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"2\" WHERE \`name\` = \"PS_MAIL_METHOD\"";'
+	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp.maildev:1025\" WHERE \`name\` = \"PS_MAIL_SERVER\"";'
+	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp_usr\" WHERE \`name\` = \"PS_MAIL_USER\"";'
+	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp_pwd\" WHERE \`name\` = \"PS_MAIL_PASSWD\"";'
+	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"1025\" WHERE \`name\` = \"PS_MAIL_SMTP_PORT\"";'
 
 # psh-admin-fix-rights:
 # 	 ${EXEC_PSH_APP} 'chmod -R 777 admin-dev/autoupgrade admin-dev/export admin-dev/import app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
@@ -380,12 +394,13 @@ psh-dev-reinstall:
 	${EXEC_PSH_APP} 'composer install'
 	make psh-dev-install-shop
 
-psh-dev-reinstall-with-assets: psh-init psh-dev-install-shop
+psh-dev-reinstall-with-assets: psh-init psh-dev-install-shop psh-dev-configure-smtp
 
 # TODO : Should we run 'composer reinstall --prefer-install=source "prestashop/*"' instead ?
 psh-dev-reinstall-with-sources: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer reinstall --prefer-install=source "prestashop/*"'
 	make psh-dev-install-shop
+	make psh-dev-configure-smtp
 
 psh-test-all: psh-test-unit psh-test-integration psh-test-behaviour psh-test-stan
 

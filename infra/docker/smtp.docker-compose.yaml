@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+
+  smtp.maildev:
+
+    # Find some useful documentation there : https://github.com/maildev/maildev/blob/master/README.md
+    image: maildev/maildev:2.0.5
+    container_name: smtp.maildev
+    restart: always
+    environment:
+      - TZ=Europe/Paris
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_SMTP_PORT=1025
+      - MAILDEV_INCOMING_USER = smtp_usr 
+      - MAILDEV_INCOMING_PASS = smtp_pwd
+      #- MAILDEV_MAIL_DIRECTORY = 
+      #- MAILDEV_HTTPS = 
+      #- MAILDEV_HTTPS_KEY = 
+      #- MAILDEV_HTTPS_CERT = 
+      #- MAILDEV_IP = 
+      #- MAILDEV_OUTGOING_HOST = 
+      #- MAILDEV_OUTGOING_PORT = 
+      #- MAILDEV_OUTGOING_USER = 
+      #- MAILDEV_OUTGOING_PASS = 
+      #- MAILDEV_OUTGOING_SECURE = 
+      #- MAILDEV_AUTO_RELAY = 
+      #- MAILDEV_AUTO_RELAY_RULES = 
+      #- MAILDEV_WEB_IP = 
+      #- MAILDEV_WEB_USER = 
+      #- MAILDEV_WEB_PASS = 
+      #- MAILDEV_BASE_PATHNAME = 
+      #- MAILDEV_DISABLE_WEB = 
+      #- MAILDEV_HIDE_EXTENSIONS = 
+    ports:
+      - "8080:1080"   # you can then access your maildev at htp://localhost:8080
+    # logging:
+    #   driver: "json-file"
+    #   options:
+    #     max-size: "1m"
+    networks:
+      - psh_backend
+
+
+# volumes:
+

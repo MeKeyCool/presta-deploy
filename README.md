@@ -39,6 +39,8 @@ In order to use this project on your environment, you need
 
 > :point_up: If you configured custom host with `PROXY_BASE_HOSTNAME_LIST`, you may want to [edit your `hosts` file](https://www.howtogeek.com/howto/27350/beginner-geek-how-to-edit-your-hosts-file/).
 
+> :point_up: By default, a SMTP server is configured on your local machine. You can access it over [http://localhost:8080/#/](http://localhost:8080/#/) link.
+
 
 ### Docker usage
 
@@ -103,40 +105,31 @@ Please take a look at [Development setup](doc/development_setup.md)
         > ```
     * [ ] Organize project with source version dependant scripts (install / update / backup / ...) may change with versions.
   * [ ] Rename all containers name to be project dependant (I want to be able install several instances of the project on my PC) => review `env-docker-clean` command to clean only project docker objects.
-  * [x] Make gitmodule "url" compliant with prestashop contributing (remove 'git@github.com:MeKeyCool/PrestaShop.git' from project dependency)
-    1. Configure project to use main Prestashop project
-    2. Configure your local git to replace Prestashop projects base url by your fork ones
-       https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
-    > :point_up: Please add `-b <branch>` parameter to properly follow branches
   * Enhance fixtures management 
     * [ ] Prestashop backup / restore commands
     * [ ] Allow init with data (tests / demo / dev / ...)
       * https://forums.docker.com/t/we-cant-push-a-docker-volume-so-now-what/56160
-  * [x] Add a complete cli install command
-    * https://doc.prestashop.com/display/PS17/Installing+PrestaShop+using+the+command-line+script 
   * [ ] Add a warning to env commands (Y/n option)
-  * [ ] Add a warning before modifying sources (check git status + Apply/Cancel/Stash option)
-  * [ ] Add php version and mysql version to project variables (deploy.env)
+  * [ ] Add php, node and mysql version to project variables (deploy.env)
+    * [ ] Create php version dedicated Dockerfiles.
 * Optimisation and project architecture
   * [ ] Check `psh-clean-cache` command (it looks it breaks something, does it ?)
-  * [ ] Create a dedicated Docker image for all dev tools : composer / node / gh
+  * [ ] Create a dedicated Docker image for all dev tools : composer / node / gh / phpmyadmin
       - https://github.com/trussworks/docker-gh/blob/master/Dockerfile#L44-L48
       - :point_up: prestashop cli commands should be run from `psh.app`
       - Should node version be configurable as well ? :thinking:
-  * [x] Make `test-all` command works
-  * [x] Check why `composer unit-test` returns an error
   * [ ] Script / command refactoring & enhancement
     * Take a look at https://github.com/jolelievre/ps-install-tools
+    * Take a look at https://github.com/SD1982/dockerQA
     * Take a look at src/prestashop/.github for CI actions / commands
-  * [ ] Add SMTP management
-    * Some example here : https://github.com/jolelievre/ps-install-tools/blob/master/tools/tools.sh#L94-L105
-    * [MailDEv](https://maildev.github.io/maildev/)
+  * [/] Add SMTP management
+    * [x] create a [MailDEv](https://maildev.github.io/maildev/) container
       https://github.com/maildev/maildev
+    * [x] sync maildev & prestashop
+    * [ ] manage smtp configuration by dedicated variables.
   * [ ] Add some cache for phpstan and php_cs dev usage (specific reset for "env cache" and not reset during psh-dev-reset)
-  * [x] Add composer cache persistent volume
   * [/] Add node/npm cache persistent volume (It looks the used volume isn't enough)
     * [ ] We may enhance "reinstall" process using this trick : https://github.com/jolelievre/ps-install-tools/blob/master/tools/tools.sh#L120-L150
-  * [x] Add proxy for custom hostname
   * [ ] Docker images build
     * [/] Take a look at multi-stage builds. Use docker-compose `build` section with `context`, `target`, `args`
           doc : 
@@ -152,7 +145,6 @@ Please take a look at [Development setup](doc/development_setup.md)
       * Take a look at some tools
         * https://github.com/nenes25/prestashop_console
         * https://github.com/friends-of-presta/fop_console
-  * [x] Remove `sudo` usage from Makefile => enhance docker volume usage => review Prestashop directories usage.
   * [ ] Study BindFS configuration for right management.
         https://www.fullstaq.com/knowledge-hub/blogs/docker-and-the-host-filesystem-owner-matching-problem
 * Prestashop sources
@@ -160,13 +152,8 @@ Please take a look at [Development setup](doc/development_setup.md)
     * [ ] Remove those directories from root source repository :
       * admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var
 * Documentation and assets
-  * [x] Manage licensing
-        https://choosealicense.com/appendix/
-  * [x] Review basic documentation on Prestashop-deploy project
   * [ ] Consider adding prestashop devdoc to ./doc/prestashop (cf. https://github.com/PrestaShop/devdocs-site/blob/main/.gitmodules)
   * [ ] Add proxy configuration documentation (`infra/env/data/${DEPLOY_ENV}/proxy.env` and `infra/env/data/${DEPLOY_ENV}/proxy/etc/nginx` specific behavior)
 * Proxy
   * [ ] Create timeout parameter to overwrite `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.proxy` (take a look to php.ini as well)
-  * [x] Find a proper setup to configure `infra/env/template/proxy/etc/nginx/vhost.d/prestashop.local` with ${PROXY_BASE_HOSTNAME} file name under ${INFRA_ENV_PATH}} directory and to replace environment variables.
-  * [x] Remove hard coded `prestashop.local` in configurations (instead of ${PROXY_BASE_HOSTNAME})
-
+  
