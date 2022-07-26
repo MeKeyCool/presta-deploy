@@ -64,3 +64,10 @@ Use case : you want to change an old commit OR you want to add a commit in histo
 
 Use case : you want to find the commit that induced a regression
 > **TODO** `git bisect`
+
+Use case : [Inserting a new commit in the Git history](https://blog.frankel.ch/inserting-new-commit-git-history/)
+
+
+
+
+

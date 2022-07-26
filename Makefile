@@ -413,12 +413,16 @@ psh-test-unit: guard-EXEC_PSH_APP
 
 psh-test-integration: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer integration-tests'	
-#	${EXEC_PSH_APP} 'composer create-test-db'
-#	${EXEC_PSH_APP} 'php -d date.timezone=UTC -d memory_limit=-1 ./vendor/phpunit/phpunit/phpunit -c tests/Integration/phpunit.xml tests/Integration/PrestaShopBundle/Controller/Sell/Customer/Address/AddressControllerTest.php'
+# 	${EXEC_PSH_APP} 'composer create-test-db'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC -d memory_limit=-1 ./vendor/phpunit/phpunit/phpunit -c tests/Integration/phpunit.xml tests/Integration/PrestaShopBundle/Controller/Sell/Customer/Address/AddressControllerTest.php'
 # 	${EXEC_PSH_APP} 'composer -vvv integration-tests'
 
 psh-test-behaviour: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
+	# ${EXEC_PSH_APP} 'composer create-test-db'
+	# ${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags add'
+	# ${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags update-combination-suppliers'
+	# ${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s legacy_product --tags legacy-product-type'
 
 # https://phpstan.org/user-guide/command-line-usage
 psh-test-stan: guard-EXEC_PSH_APP
