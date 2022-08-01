@@ -306,48 +306,47 @@ proxy-config:
 
 # Please notice that composer `--prefer-install=source` option is made for local development (keep .git in dependencies)
 # Todo : make `--prefer-install=source` optional for "development" environments
-psh-init: guard-EXEC_PSH_APP guard-EXEC_PSH_CLI_NPM
+psh-init: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer install' 
 	${EXEC_PSH_APP} 'touch .htaccess'
-	${EXEC_PSH_CLI_NPM} 'make assets'
+	make psh-dev-build-front
 #	 ${EXEC_PSH_APP} 'php bin/console ...'
-
 
 # TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
 # TODO : problem to fix with img
 # TODO : add admin-dev/export admin-dev/import directories
-# psh-clean-artefacts: guard-INFRA_SRC_PSH
-# 	@echo "=== Remove install/dev artefacts"
-# 	rm -rf ${INFRA_SRC_PSH}/themes/node_modules ${INFRA_SRC_PSH}/themes/core.js ${INFRA_SRC_PSH}/themes/core.js.map ${INFRA_SRC_PSH}/themes/core.js.LICENSE.txt
-# 	cd ${INFRA_SRC_PSH}; \
-# 		rm -rf app/logs log; mkdir -p app/logs log; \
-# 		rm .htaccess; \
-# 		rm var/bootstrap.php.cache; \
-# 		rm app/config/parameters.php app/config/parameters.yml; \
-# 		rm -rf config/settings.inc.php config/themes/classic; \
-# 		rm -rf themes/classic/assets/cache; \
-# 		find app/Resources/translations -maxdepth 1 -mindepth 1 -type d ! -name 'default' -or -type f ! -name '.gitkeep' | xargs -I {} sh -c "rm -rf {}"; \
-# 		find download 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
-# 		find config/themes -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep'					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/c 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/e 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/genders   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'Unknown.jpg' | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/l 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'none.jpg'  | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/m 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/p 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/os 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/st 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/su 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find img/tmp 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find mails		   -maxdepth 1 -mindepth 1 -type d ! -name '_partials' ! -name 'themes' -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
-# 		find modules 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
-# 		find themes  	   -maxdepth 1 -mindepth 1 -type d -name 'hummingbird'								   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find translations  -maxdepth 1 -mindepth 1 -type d ! -name 'cldr' ! -name 'export' ! -name 'default' -or -type f ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
-# 		find upload 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
-# 		find var/cache	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find var/logs 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find var/sessions  -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
-# 		find vendor 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess'					   | xargs -I {} sh -c "rm -rf {}"
+psh-clean-artefacts: guard-INFRA_SRC_PSH
+	@echo "=== Remove install/dev artefacts"
+	cd ${INFRA_SRC_PSH}; \
+		rm -rf themes/node_modules themes/core.js themes/core.js.map themes/core.js.LICENSE.txt; \
+		rm -rf app/logs log; mkdir -p app/logs log; \
+		rm .htaccess; \
+		rm var/bootstrap.php.cache; \
+		rm app/config/parameters.php app/config/parameters.yml; \
+		rm -rf config/settings.inc.php config/themes/classic; \
+		rm -rf themes/classic/assets/cache; \
+		find app/Resources/translations -maxdepth 1 -mindepth 1 -type d ! -name 'default' -or -type f ! -name '.gitkeep' | xargs -I {} sh -c "rm -rf {}"; \
+		find download 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+		find config/themes -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep'					   | xargs -I {} sh -c "rm -rf {}"; \
+		find img/c 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find img/e 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find img/genders   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'Unknown.jpg' | xargs -I {} sh -c "rm -rf {}"; \
+		find img/l 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' ! -name 'none.jpg'  | xargs -I {} sh -c "rm -rf {}"; \
+		find img/m 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find img/p 	   	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find img/os 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find img/st 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find img/su 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find img/tmp 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name 'index.php' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find mails		   -maxdepth 1 -mindepth 1 -type d ! -name '_partials' ! -name 'themes' -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+		find modules 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+		find themes  	   -maxdepth 1 -mindepth 1 -type d -name 'hummingbird'								   | xargs -I {} sh -c "rm -rf {}"; \
+		find translations  -maxdepth 1 -mindepth 1 -type d ! -name 'cldr' ! -name 'export' ! -name 'default' -or -type f ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+		find upload 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess' ! -name 'index.php' | xargs -I {} sh -c "rm -rf {}"; \
+		find var/cache	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find var/logs 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find var/sessions  -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.gitkeep' 					   | xargs -I {} sh -c "rm -rf {}"; \
+		find vendor 	   -maxdepth 1 -mindepth 1 -type d -or -type f ! -name '.htaccess'					   | xargs -I {} sh -c "rm -rf {}"
 
 # TODO : shouldn't we move this cache to env/data ?
 psh-clean-infra-cache: guard-INFRA_DOCKER_PATH
@@ -358,6 +357,9 @@ psh-clean-infra-cache: guard-INFRA_DOCKER_PATH
 
 # Specific Prestashop development and test commands
 ####################################################
+
+psh-dev-get-PS_VERSION: guard-EXEC_PSH_APP
+	@${EXEC_PSH_APP} 'php -r "include_once(\"install-dev/install_version.php\"); print_r(\"Prestashop installed version : \". _PS_INSTALL_VERSION_ . \"\r\n\");"'
 
 # TODO : add environment variables to customize and ensure consistency (name / email / password).
 # TODO : check --db_create=1` usage
@@ -390,15 +392,16 @@ psh-dev-configure-smtp: guard-EXEC_PSH_DB
 psh-dev-env-reset: env-reset infra-init infra-run psh-dev-install-shop
 
 # TODO : remove modules, cache, artefacts, ... ?
-psh-dev-reinstall: 
+psh-dev-reinstall: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer install'
 	make psh-dev-install-shop
 
-psh-dev-reinstall-with-assets: psh-init psh-dev-install-shop psh-dev-configure-smtp
+psh-dev-reinstall-with-assets: psh-clean-artefacts psh-init psh-dev-install-shop psh-dev-configure-smtp
 
-# TODO : Should we run 'composer reinstall --prefer-install=source "prestashop/*"' instead ?
-psh-dev-reinstall-with-sources: guard-EXEC_PSH_APP
+psh-dev-reinstall-with-sources: guard-EXEC_PSH_APP psh-clean-artefacts
 	${EXEC_PSH_APP} 'composer reinstall --prefer-install=source "prestashop/*"'
+	make psh-dev-build-front
+	${EXEC_PSH_APP} 'touch .htaccess'
 	make psh-dev-install-shop
 	make psh-dev-configure-smtp
 
@@ -419,10 +422,11 @@ psh-test-integration: guard-EXEC_PSH_APP
 
 psh-test-behaviour: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
-	# ${EXEC_PSH_APP} 'composer create-test-db'
-	# ${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags add'
-	# ${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags update-combination-suppliers'
-	# ${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s legacy_product --tags legacy-product-type'
+# 	${EXEC_PSH_APP} 'composer create-test-db'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml -s supplier'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags add'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags update-combination-suppliers'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s legacy_product --tags legacy-product-type'
 
 # https://phpstan.org/user-guide/command-line-usage
 psh-test-stan: guard-EXEC_PSH_APP
@@ -436,8 +440,8 @@ psh-test-stan: guard-EXEC_PSH_APP
 # 	${EXEC_PSH_APP} 'php bin/console cache:clear'
 
 psh-dev-watch-admin-dev: guard-EXEC_PSH_CLI_NPM
-	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
-	# ${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/default; npm run watch'
+	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/default; npm run watch'
+# 	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
 
 psh-dev-watch-classic: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd themes/classic/_dev; npm run watch'
@@ -446,6 +450,7 @@ psh-dev-build-front: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'make assets'
 
 
+# TODO : check style for ./admin-dev/themes/default !
 psh-dev-apply-guidelines: guard-EXEC_PSH_APP guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_APP} 'php ./vendor/bin/php-cs-fixer fix'
 	${EXEC_PSH_CLI_NPM} 'cd ./admin-dev/themes/new-theme && npm run lint-fix && npm run scss-fix'
