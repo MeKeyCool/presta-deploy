@@ -41,6 +41,11 @@ ifneq (,$(wildcard ${INFRA_ENV_PATH}/proxy.env))
     export
 endif
 
+ifneq (,$(wildcard ${INFRA_ENV_PATH}/smtp.env))
+    include ${INFRA_ENV_PATH}/smtp.env
+    export
+endif
+
 # TODO : use environment variables for Prestashop
 # ifneq (,$(wildcard ${INFRA_ENV_PATH}/presta.env))
 #     include ${INFRA_ENV_PATH}/presta.env
@@ -198,7 +203,7 @@ clean-config: config-backup
 # 	cache:warmup
 # 	doctrine:cache:clear-*
 
-clean-all: clean-config
+clean-all: clean-config psh-clean
 
 
 ## Shell
@@ -307,10 +312,12 @@ proxy-config:
 # Please notice that composer `--prefer-install=source` option is made for local development (keep .git in dependencies)
 # Todo : make `--prefer-install=source` optional for "development" environments
 psh-init: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'composer install' 
+	@ ${EXEC_PSH_APP} 'composer install' 
 	${EXEC_PSH_APP} 'touch .htaccess'
 	make psh-dev-build-front
 #	 ${EXEC_PSH_APP} 'php bin/console ...'
+
+psh-clean: psh-clean-artefacts psh-clean-infra-cache
 
 # TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
 # TODO : problem to fix with img
@@ -378,12 +385,19 @@ psh-dev-install-shop: guard-EXEC_PSH_APP
 		--password=adminadmin \
 		--db_create=1'
 
+# :point_up: Please notice that `PS_MAIL_METHOD` can take those 3 values :
+#   - `1` : native mailing
+#   - `2` : mailing over SMTP server
+#   - `3` : disable mailing
 psh-dev-configure-smtp: guard-EXEC_PSH_DB
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"2\" WHERE \`name\` = \"PS_MAIL_METHOD\"";'
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp.maildev:1025\" WHERE \`name\` = \"PS_MAIL_SERVER\"";'
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp_usr\" WHERE \`name\` = \"PS_MAIL_USER\"";'
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp_pwd\" WHERE \`name\` = \"PS_MAIL_PASSWD\"";'
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"1025\" WHERE \`name\` = \"PS_MAIL_SMTP_PORT\"";'
+	@ echo " === Configure SMTP for Prestashop with '${SMTP_SRV_HOST}' server"
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"2\" WHERE \`name\` = \"PS_MAIL_METHOD\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_HOST}\" WHERE \`name\` = \"PS_MAIL_SERVER\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_ENCRYPTION}\" WHERE \`name\` = \"PS_MAIL_SMTP_ENCRYPTION\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_PORT}\" WHERE \`name\` = \"PS_MAIL_SMTP_PORT\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_USR}\" WHERE \`name\` = \"PS_MAIL_USER\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_PWD}\" WHERE \`name\` = \"PS_MAIL_PASSWD\"";'
+
 
 # psh-admin-fix-rights:
 # 	 ${EXEC_PSH_APP} 'chmod -R 777 admin-dev/autoupgrade admin-dev/export admin-dev/import app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
@@ -393,7 +407,7 @@ psh-dev-env-reset: env-reset infra-init infra-run psh-dev-install-shop
 
 # TODO : remove modules, cache, artefacts, ... ?
 psh-dev-reinstall: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'composer install'
+	@ ${EXEC_PSH_APP} 'composer install'
 	make psh-dev-install-shop
 
 psh-dev-reinstall-with-assets: psh-clean-artefacts psh-init psh-dev-install-shop psh-dev-configure-smtp
@@ -448,6 +462,7 @@ psh-dev-watch-classic: guard-EXEC_PSH_CLI_NPM
 
 psh-dev-build-front: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'make assets'
+# 	${EXEC_PSH_CLI_NPM} 'sh -c tools/assets/build.sh'
 
 
 # TODO : check style for ./admin-dev/themes/default !

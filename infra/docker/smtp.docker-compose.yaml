@@ -33,7 +33,7 @@ services:
       #- MAILDEV_DISABLE_WEB = 
       #- MAILDEV_HIDE_EXTENSIONS = 
     ports:
-      - "8080:1080"   # you can then access your maildev at htp://localhost:8080
+      - "8080:1080"   # you can then access your maildev at http://localhost:8080
     # logging:
     #   driver: "json-file"
     #   options:
