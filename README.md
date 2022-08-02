@@ -19,7 +19,7 @@ In order to use this project on your environment, you need
 
 ## Deployment
 
-### Local install
+### Local first install
 
 1. For first install, pre-configure your environment 
     1. ``cp infra/env/deploy.env.template infra/env/deploy.env``
@@ -39,7 +39,47 @@ In order to use this project on your environment, you need
 
 > :point_up: If you configured custom host with `PROXY_BASE_HOSTNAME_LIST`, you may want to [edit your `hosts` file](https://www.howtogeek.com/howto/27350/beginner-geek-how-to-edit-your-hosts-file/).
 
-> :point_up: By default, a SMTP server is configured on your local machine. You can access it over [http://localhost:8080/#/](http://localhost:8080/#/) link.
+
+### Emailing configuration 
+
+If you need to test Prestashop emailing, you can configure a local SMTP server with `make psh-dev-configure-smtp` command.
+
+Then you can access it over [http://localhost:8080/#/](http://localhost:8080/#/).
+
+> :point_up: Your `${DOCKER_COMPOSE}` variable requires to integrate SMTP service configuration (ie. `-f ${INFRA_DOCKER_PATH}/smtp.docker-compose.yaml`)
+
+You can use another SMTP server. This example helps you to configure a Gmail SMTP server :
+Example of Gmail smtp server configuration :
+1. Generate an app password in Gmail
+    > Useful documentation :
+    > - [Create an App Password for gmail](https://support.google.com/mail/answer/185833?hl=en)
+    > - [Generate app password for Gmail inbox](https://www.chatwoot.com/docs/product/channels/email/gmail/generate-app-password)
+    > - [access for lesser app](https://stackoverflow.com/questions/42558903/expected-response-code-250-but-got-code-535-with-message-535-5-7-8-username)
+2. Edit your SMTP configuration (`${INFRA_ENV_PATH}/smtp.env`) :
+  - SMTP server     : smtp.gmail.com
+  - SMTP username   : {your gmail email}
+  - SMTP password   : {app password you previously generated}
+  - SMTP encryption : tls or ssl
+  - SMTP port       : 587 (for tls) or 465 (for ssl)
+3. re run `make psh-dev-configure-smtp` command
+
+> :warning: It looks that encryption value may suffer some cache problem if you set it with makefile command.
+
+### Reset your full environment (including Docker)
+
+1. `make env-reset`
+2. `cd src/prestashop` {change your prestashop version, exemple : `git checkout 1.7.8.x`}
+3. `make infra-init`
+
+> :point_up: This won't change your `*.env` configurations
+
+### Reset your shop data
+
+1. `psh-dev-reinstall`
+
+### Reset your shop data after a major version change (requires to rebuild assets et clean modules)
+
+1. `make psh-dev-reinstall-with-assets`
 
 
 ### Docker usage
@@ -79,6 +119,13 @@ Please take a look at [Development setup](doc/development_setup.md)
 ### Dev and stack documentation
 
 * [How To Debug PHP using Xdebug, VS Code and Docker](https://php.tutorials24x7.com/blog/how-to-debug-php-using-xdebug-visual-studio-code-and-docker-on-ubuntu)
+
+#### Contribute to a Prestashop module
+
+The command `make psh-dev-reinstall-with-sources` is made to load modules keeping `.git` then you can work and test modules inside Prestashop directly.
+
+> :warning: Be attentive to remote configuration to sync with your fork.
+
 
 ## Todo
 
@@ -126,7 +173,8 @@ Please take a look at [Development setup](doc/development_setup.md)
     * [x] create a [MailDEv](https://maildev.github.io/maildev/) container
       https://github.com/maildev/maildev
     * [x] sync maildev & prestashop
-    * [ ] manage smtp configuration by dedicated variables.
+    * [x] manage smtp configuration by dedicated variables.
+    * [ ] Find a way to reset applicativ cache after `make psh-dev-configure-smtp` command (due to encryption cache problem)
   * [ ] Add some cache for phpstan and php_cs dev usage (specific reset for "env cache" and not reset during psh-dev-reset)
   * [/] Add node/npm cache persistent volume (It looks the used volume isn't enough)
     * [ ] We may enhance "reinstall" process using this trick : https://github.com/jolelievre/ps-install-tools/blob/master/tools/tools.sh#L120-L150

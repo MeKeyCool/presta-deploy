@@ -41,6 +41,11 @@ ifneq (,$(wildcard ${INFRA_ENV_PATH}/proxy.env))
     export
 endif
 
+ifneq (,$(wildcard ${INFRA_ENV_PATH}/smtp.env))
+    include ${INFRA_ENV_PATH}/smtp.env
+    export
+endif
+
 # TODO : use environment variables for Prestashop
 # ifneq (,$(wildcard ${INFRA_ENV_PATH}/presta.env))
 #     include ${INFRA_ENV_PATH}/presta.env
@@ -89,7 +94,9 @@ env-init: guard-INFRA_ENV_PATH guard-INFRA_ENV_BASE_PATH guard-INFRA_SRC_PSH
 
 # Usefull for prestashop-deploy dev purpose : reset environment to fresh configured project 
 # WARNING : remove all docker objects (even other projects one)
-env-reset: clean-all env-docker-clean config-restore psh-clean-infra-cache
+env-clean: clean-all env-docker-clean config-restore psh-clean-infra-cache
+
+env-reset: env-clean
 	rm -rf ${INFRA_SRC_PSH}
 	git submodule update --init
 
@@ -198,7 +205,7 @@ clean-config: config-backup
 # 	cache:warmup
 # 	doctrine:cache:clear-*
 
-clean-all: clean-config
+clean-all: clean-config psh-clean
 
 
 ## Shell
@@ -307,10 +314,12 @@ proxy-config:
 # Please notice that composer `--prefer-install=source` option is made for local development (keep .git in dependencies)
 # Todo : make `--prefer-install=source` optional for "development" environments
 psh-init: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'composer install' 
+	@ ${EXEC_PSH_APP} 'composer install' 
 	${EXEC_PSH_APP} 'touch .htaccess'
 	make psh-dev-build-front
 #	 ${EXEC_PSH_APP} 'php bin/console ...'
+
+psh-clean: psh-clean-artefacts psh-clean-infra-cache
 
 # TODO : how to clean / manage ${INFRA_SRC_PSH}/cache ? Not considered : admin-dev/autoupgrade app/config app/Resources/translations config img mails override
 # TODO : problem to fix with img
@@ -378,22 +387,29 @@ psh-dev-install-shop: guard-EXEC_PSH_APP
 		--password=adminadmin \
 		--db_create=1'
 
+# :point_up: Please notice that `PS_MAIL_METHOD` can take those 3 values :
+#   - `1` : native mailing
+#   - `2` : mailing over SMTP server
+#   - `3` : disable mailing
 psh-dev-configure-smtp: guard-EXEC_PSH_DB
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"2\" WHERE \`name\` = \"PS_MAIL_METHOD\"";'
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp.maildev:1025\" WHERE \`name\` = \"PS_MAIL_SERVER\"";'
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp_usr\" WHERE \`name\` = \"PS_MAIL_USER\"";'
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"smtp_pwd\" WHERE \`name\` = \"PS_MAIL_PASSWD\"";'
-	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"1025\" WHERE \`name\` = \"PS_MAIL_SMTP_PORT\"";'
+	@ echo " === Configure SMTP for Prestashop with '${SMTP_SRV_HOST}' server"
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"2\" WHERE \`name\` = \"PS_MAIL_METHOD\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_HOST}\" WHERE \`name\` = \"PS_MAIL_SERVER\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_ENCRYPTION}\" WHERE \`name\` = \"PS_MAIL_SMTP_ENCRYPTION\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_PORT}\" WHERE \`name\` = \"PS_MAIL_SMTP_PORT\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_USR}\" WHERE \`name\` = \"PS_MAIL_USER\"";'
+	@ ${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "UPDATE \`ps_configuration\` SET \`value\` = \"${SMTP_SRV_PWD}\" WHERE \`name\` = \"PS_MAIL_PASSWD\"";'
+
 
 # psh-admin-fix-rights:
 # 	 ${EXEC_PSH_APP} 'chmod -R 777 admin-dev/autoupgrade admin-dev/export admin-dev/import app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 #	 ${EXEC_PSH_APP} 'mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 
-psh-dev-env-reset: env-reset infra-init infra-run psh-dev-install-shop
+psh-dev-env-reset: env-clean infra-init psh-dev-install-shop
 
 # TODO : remove modules, cache, artefacts, ... ?
 psh-dev-reinstall: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'composer install'
+	@ ${EXEC_PSH_APP} 'composer install'
 	make psh-dev-install-shop
 
 psh-dev-reinstall-with-assets: psh-clean-artefacts psh-init psh-dev-install-shop psh-dev-configure-smtp
@@ -410,18 +426,22 @@ psh-test-all: psh-test-unit psh-test-integration psh-test-behaviour psh-test-sta
 # NOTICE : If you want to list deprecation warnings, you may want to edit `SYMFONY_DEPRECATIONS_HELPER` value
 # see https://symfony.com/doc/current/components/phpunit_bridge.html#configuration
 psh-test-unit: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'SYMFONY_DEPRECATIONS_HELPER=weak composer unit-test'
+	-${EXEC_PSH_APP} 'SYMFONY_DEPRECATIONS_HELPER=weak composer unit-test'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/PrestaShopBundle/Utils/TreeTest.php'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Search/PaginationTest.php'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml'
-# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Module/ModuleRepositoryTest.php'
 
 psh-test-integration: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer integration-tests'	
 # 	${EXEC_PSH_APP} 'composer create-test-db'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC -d memory_limit=-1 ./vendor/phpunit/phpunit/phpunit -c tests/Integration/phpunit.xml tests/Integration/Classes/ObjectModelTest.php'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC -d memory_limit=-1 ./vendor/phpunit/phpunit/phpunit -c tests/Integration/phpunit.xml tests/Integration/PrestaShopBundle/Controller/Sell/Customer/Address/AddressControllerTest.php'
 # 	${EXEC_PSH_APP} 'composer -vvv integration-tests'
 
 psh-test-behaviour: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
+	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml -s product --tags update-multi-shop-shipping'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress'
+# 	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
 # 	${EXEC_PSH_APP} 'composer create-test-db'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml -s supplier'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags add'
@@ -439,15 +459,19 @@ psh-test-stan: guard-EXEC_PSH_APP
 # psh-clean-cache: guard-EXEC_PSH_APP
 # 	${EXEC_PSH_APP} 'php bin/console cache:clear'
 
-psh-dev-watch-admin-dev: guard-EXEC_PSH_CLI_NPM
+psh-dev-watch-admin-new-theme: guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
+
+psh-dev-watch-admin-default: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/default; npm run watch'
-# 	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
 
 psh-dev-watch-classic: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd themes/classic/_dev; npm run watch'
 
 psh-dev-build-front: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'make assets'
+# 	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run build'
+# 	${EXEC_PSH_CLI_NPM} 'sh -c tools/assets/build.sh'
 
 
 # TODO : check style for ./admin-dev/themes/default !
