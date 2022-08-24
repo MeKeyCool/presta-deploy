@@ -94,7 +94,9 @@ env-init: guard-INFRA_ENV_PATH guard-INFRA_ENV_BASE_PATH guard-INFRA_SRC_PSH
 
 # Usefull for prestashop-deploy dev purpose : reset environment to fresh configured project 
 # WARNING : remove all docker objects (even other projects one)
-env-reset: clean-all env-docker-clean config-restore psh-clean-infra-cache
+env-clean: clean-all env-docker-clean config-restore psh-clean-infra-cache
+
+env-reset: env-clean
 	rm -rf ${INFRA_SRC_PSH}
 	git submodule update --init
 
@@ -403,7 +405,7 @@ psh-dev-configure-smtp: guard-EXEC_PSH_DB
 # 	 ${EXEC_PSH_APP} 'chmod -R 777 admin-dev/autoupgrade admin-dev/export admin-dev/import app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 #	 ${EXEC_PSH_APP} 'mkdir -p admin-dev/autoupgrade app/config app/logs app/Resources/translations cache config download img log mails modules override themes translations upload var'
 
-psh-dev-env-reset: env-reset infra-init infra-run psh-dev-install-shop
+psh-dev-env-reset: env-clean infra-init psh-dev-install-shop
 
 # TODO : remove modules, cache, artefacts, ... ?
 psh-dev-reinstall: guard-EXEC_PSH_APP
@@ -424,18 +426,22 @@ psh-test-all: psh-test-unit psh-test-integration psh-test-behaviour psh-test-sta
 # NOTICE : If you want to list deprecation warnings, you may want to edit `SYMFONY_DEPRECATIONS_HELPER` value
 # see https://symfony.com/doc/current/components/phpunit_bridge.html#configuration
 psh-test-unit: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'SYMFONY_DEPRECATIONS_HELPER=weak composer unit-test'
+	-${EXEC_PSH_APP} 'SYMFONY_DEPRECATIONS_HELPER=weak composer unit-test'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/PrestaShopBundle/Utils/TreeTest.php'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Search/PaginationTest.php'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml'
-# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/phpunit/phpunit/phpunit -c tests/Unit/phpunit.xml tests/Unit/Core/Module/ModuleRepositoryTest.php'
 
 psh-test-integration: guard-EXEC_PSH_APP
 	${EXEC_PSH_APP} 'composer integration-tests'	
 # 	${EXEC_PSH_APP} 'composer create-test-db'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC -d memory_limit=-1 ./vendor/phpunit/phpunit/phpunit -c tests/Integration/phpunit.xml tests/Integration/Classes/ObjectModelTest.php'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC -d memory_limit=-1 ./vendor/phpunit/phpunit/phpunit -c tests/Integration/phpunit.xml tests/Integration/PrestaShopBundle/Controller/Sell/Customer/Address/AddressControllerTest.php'
 # 	${EXEC_PSH_APP} 'composer -vvv integration-tests'
 
 psh-test-behaviour: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
+	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml -s product --tags update-multi-shop-shipping'
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress'
+# 	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
 # 	${EXEC_PSH_APP} 'composer create-test-db'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml -s supplier'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags add'
@@ -453,16 +459,17 @@ psh-test-stan: guard-EXEC_PSH_APP
 # psh-clean-cache: guard-EXEC_PSH_APP
 # 	${EXEC_PSH_APP} 'php bin/console cache:clear'
 
-psh-dev-watch-admin-dev: guard-EXEC_PSH_CLI_NPM
+psh-dev-watch-admin-new-theme: guard-EXEC_PSH_CLI_NPM
+	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
+
+psh-dev-watch-admin-default: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/default; npm run watch'
-# 	${EXEC_PSH_CLI_NPM} 'cd admin-dev/themes/new-theme; npm run watch'
 
 psh-dev-watch-classic: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'cd themes/classic/_dev; npm run watch'
 
 psh-dev-build-front: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} 'make assets'
-# 	${EXEC_PSH_CLI_NPM} 'sh -c tools/assets/build.sh'
 
 
 # TODO : check style for ./admin-dev/themes/default !
