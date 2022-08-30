@@ -151,11 +151,11 @@ log-psh.app: guard-EXEC_PSH_APP
 # 	${DOCKER_COMPOSE} logs -f psh.app
 
 log-proxy-env: guard-DOCKER_COMPOSE
-	${DOCKER_COMPOSE} exec proxy.nginx printenv | sort
-	${DOCKER_COMPOSE} exec proxy.letsencrypt printenv | sort
+	${DOCKER_COMPOSE} run proxy.nginx printenv | sort
+	${DOCKER_COMPOSE} run proxy.letsencrypt printenv | sort
 
 log-smtp: guard-DOCKER_COMPOSE guard-EXEC_PSH_DB
-	${DOCKER_COMPOSE} exec smtp.maildev printenv | sort
+	${DOCKER_COMPOSE} run smtp.maildev printenv | sort
 	${EXEC_PSH_DB} 'mysql -u prestashop_admin --password=prestashop_admin -D prestashop -e "SELECT * FROM ps_configuration WHERE \`name\` LIKE \"PS_MAIL%\"";'
 
 log-system:
@@ -224,17 +224,17 @@ shell-psh.cli.npm: guard-EXEC_PSH_CLI_NPM
 	${EXEC_PSH_CLI_NPM} '/bin/bash'
 	
 shell-psh.app-sudo: guard-DOCKER_COMPOSE
-	${DOCKER_COMPOSE} exec -u root:root psh.app sh -c '/bin/bash'
-# 	${DOCKER_COMPOSE} exec -u ${HOST_ID} psh.app sh -c '/bin/bash'
+	${DOCKER_COMPOSE} run -u root:root psh.app sh -c '/bin/bash'
+# 	${DOCKER_COMPOSE} run -u ${HOST_ID} psh.app sh -c '/bin/bash'
 
 shell-proxy: guard-DOCKER_COMPOSE
-	${DOCKER_COMPOSE} exec -u root:root proxy.nginx sh -c '/bin/sh'
+	${DOCKER_COMPOSE} run -u root:root proxy.nginx sh -c '/bin/sh'
 
 shell-proxy.letsencrypt: guard-DOCKER_COMPOSE
-	${DOCKER_COMPOSE} exec -u root:root proxy.letsencrypt sh -c '/bin/sh'
+	${DOCKER_COMPOSE} run -u root:root proxy.letsencrypt sh -c '/bin/sh'
 
 shell-smtp.maildev: guard-DOCKER_COMPOSE
-	${DOCKER_COMPOSE} exec -u root:root smtp.maildev sh -c '/bin/sh'
+	${DOCKER_COMPOSE} run -u root:root smtp.maildev sh -c '/bin/sh'
 
 
 ## Tests
