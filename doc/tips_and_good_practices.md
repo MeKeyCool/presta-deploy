@@ -67,7 +67,11 @@ Use case : you want to find the commit that induced a regression
 
 Use case : [Inserting a new commit in the Git history](https://blog.frankel.ch/inserting-new-commit-git-history/)
 
+Find the 20 commits in history around the [HASH] one :  
+```sh
+git rev-list --reverse --pretty=oneline --ancestry-path [HASH]~6..develop | head -21
+```
 
-
+> :point_up: Please notice that for given exemple, we consider git history path between our [HASH] commit and develop branch. You may need to change "develop" as well.
 
 

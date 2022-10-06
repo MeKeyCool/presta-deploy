@@ -14,6 +14,8 @@ server {
 	# TODO : create custom proxy log file by hostname 
 	access_log /var/log/nginx/access.log vhost;
 
+	client_max_body_size 250M;
+
 	include /etc/nginx/vhost.d/default;
 	include /etc/nginx/vhost.d/prestashop.proxy;
 	
@@ -28,6 +30,8 @@ server {
 	
 	# TODO : create custom proxy log file by hostname 
 	access_log /var/log/nginx/access.log vhost;
+
+	client_max_body_size 250M;
 
 	ssl_certificate /etc/nginx/certs/default.crt;
 	ssl_certificate_key /etc/nginx/certs/default.key;

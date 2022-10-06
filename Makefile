@@ -329,9 +329,9 @@ psh-clean-artefacts: guard-INFRA_SRC_PSH
 	cd ${INFRA_SRC_PSH}; \
 		rm -rf themes/node_modules themes/core.js themes/core.js.map themes/core.js.LICENSE.txt; \
 		rm -rf app/logs log; mkdir -p app/logs log; \
-		rm .htaccess; \
-		rm var/bootstrap.php.cache; \
-		rm app/config/parameters.php app/config/parameters.yml; \
+		rm -f .htaccess; \
+		rm -f var/bootstrap.php.cache; \
+		rm -f app/config/parameters.php app/config/parameters.yml; \
 		rm -rf config/settings.inc.php config/themes/classic; \
 		rm -rf themes/classic/assets/cache; \
 		find app/Resources/translations -maxdepth 1 -mindepth 1 -type d ! -name 'default' -or -type f ! -name '.gitkeep' | xargs -I {} sh -c "rm -rf {}"; \
@@ -439,9 +439,9 @@ psh-test-integration: guard-EXEC_PSH_APP
 # 	${EXEC_PSH_APP} 'composer -vvv integration-tests'
 
 psh-test-behaviour: guard-EXEC_PSH_APP
-	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml -s product --tags update-multi-shop-shipping'
+	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
+# 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml -s product --tags update-multi-shop-shipping'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress'
-# 	${EXEC_PSH_APP} 'composer integration-behaviour-tests'	
 # 	${EXEC_PSH_APP} 'composer create-test-db'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml -s supplier'
 # 	${EXEC_PSH_APP} 'php -d date.timezone=UTC ./vendor/bin/behat -c tests/Integration/Behaviour/behat.yml --format progress -s product --tags add'
